@@ -48,6 +48,7 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     ahri        = row[6]
     prix_coutant = row[12]
     subvention   = row[13]
+    lien_master  = row[14] if len(row) > 14 else None
 
     if not no_modele or prix_coutant is None:
         skipped += 1
@@ -64,7 +65,8 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
     prix     = round(prix_coutant)
 
-    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub])
+    lien = str(lien_master).strip() if lien_master else None
+    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien])
 
 # --- Génération du JS ---
 def js_row(r):
@@ -75,7 +77,8 @@ def js_row(r):
     description = json.dumps(r[4], ensure_ascii=False)
     prix        = str(r[5])
     sub         = str(r[6]) if r[6] is not None else 'null'
-    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub}]'
+    lien        = json.dumps(r[7], ensure_ascii=False) if r[7] else 'null'
+    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien}]'
 
 raw_data_js    = 'const rawData = [\n' + ',\n'.join(js_row(r) for r in rows) + '\n];'
 section_ord_js = 'const sectionOrder = ' + json.dumps(SECTION_ORDER, ensure_ascii=False) + ';'
