@@ -252,6 +252,16 @@ let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 
 const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0})+' $';
 
+function countProducts(rows) {
+  const ahris = new Set();
+  let singles = 0;
+  rows.forEach(r => {
+    if (r[2] === '—') singles++;
+    else ahris.add(r[0] + '|' + r[2]);
+  });
+  return singles + ahris.size;
+}
+
 function slugify(str) {
   return str.toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g,'')
@@ -326,7 +336,7 @@ function groupBySection(rows) {
 function render() {
   const container=document.getElementById('mainContent');
   const subCount=filtered.filter(r=>r[6]).length;
-  document.getElementById('countDisplay').textContent=filtered.length;
+  document.getElementById('countDisplay').textContent=countProducts(filtered);
   document.getElementById('subCountDisplay').textContent=subCount>0?`· ${subCount} avec subvention 💚`:'';
   if(!filtered.length){container.innerHTML=`<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Aucun résultat pour ces filtres.</p></div>`;return;}
   if(currentTab==='resume') currentView==='cards'?renderCards(container):renderTable(container);
@@ -337,7 +347,7 @@ function renderCards(container) {
   const {groups,order}=groupBySection(filtered);
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
-    const total=Object.values(ahriGroups).flat().length;
+    const total=Object.keys(ahriGroups).length;
     const cards=Object.entries(ahriGroups).map(([ahri,rows])=>{
       const totalPrice=rows.reduce((sum,r)=>sum+r[5],0);
       const subRow=rows.find(r=>r[6]);
@@ -375,7 +385,7 @@ function renderTable(container) {
   const {groups,order}=groupBySection(filtered);
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
-    const total=Object.values(ahriGroups).flat().length;
+    const total=Object.keys(ahriGroups).length;
     const rows=Object.entries(ahriGroups).map(([ahri,rws])=>
       rws.map((r,i)=>`<tr>
         ${i===0?`<td class="td-ahri" rowspan="${rws.length}" style="border-right:2px solid var(--gray-100);vertical-align:middle;background:var(--gray-50)">${ahri}</td>`:''}
