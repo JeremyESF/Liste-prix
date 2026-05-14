@@ -364,11 +364,11 @@ function renderCards(container) {
           ${rows.map(r=>`<div class="card-unit">
             <div class="card-model">${getLink(r[3],r[4],r[7])?`<a href="${getLink(r[3],r[4],r[7])}" target="_blank" onclick="event.stopPropagation()" class="model-link">${r[3]}</a>`:r[3]}</div>
             <div class="card-desc">${r[4]}</div>
-            ${(r[8]||r[9])?`<div class="card-specs">${r[8]?`<span class="spec-badge">Disj. ${r[8]} A</span>`:''} ${r[9]?`<span class="spec-badge">Tuyaux ${r[9]}</span>`:''}</div>`:''}
             <div class="card-prices">
               <div class="price-tag"><div class="label">Prix coutant</div><div class="amount">${fmt(r[5])}</div></div>
             </div>
           </div>`).join('')}
+          ${(()=>{const d=[...new Set(rows.map(r=>r[8]).filter(Boolean))];const t=[...new Set(rows.map(r=>r[9]).filter(Boolean))];return(d.length||t.length)?`<div class="card-specs" style="margin-top:8px">${d.map(v=>`<span class="spec-badge">Disj. ${v} A</span>`).join('')}${t.map(v=>`<span class="spec-badge">Tuyaux ${v}</span>`).join('')}</div>`:''})()}
           ${subRow?`<div class="card-sub-row"><span class="sub-label">Subvention disponible</span><span class="sub-amount">${fmt(subRow[6])}</span></div>`:''}
         </div>
         <div class="card-expand">
@@ -386,16 +386,19 @@ function renderTable(container) {
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
     const total=Object.keys(ahriGroups).length;
-    const rows=Object.entries(ahriGroups).map(([ahri,rws])=>
-      rws.map((r,i)=>`<tr>
-        ${i===0?`<td class="td-ahri" rowspan="${rws.length}" style="border-right:2px solid var(--gray-100);vertical-align:middle;background:var(--gray-50)">${ahri}</td>`:''}
+    const rows=Object.entries(ahriGroups).map(([ahri,rws])=>{
+      const d=[...new Set(rws.map(r=>r[8]).filter(Boolean))];
+      const t=[...new Set(rws.map(r=>r[9]).filter(Boolean))];
+      const specs=[...d.map(v=>v+' A'),...t].join(' · ');
+      return rws.map((r,i)=>`<tr>
+        ${i===0?`<td class="td-ahri" rowspan="${rws.length}" style="border-right:2px solid var(--gray-100);vertical-align:top;background:var(--gray-50);padding-top:10px">${ahri}${specs?`<div style="font-size:10px;color:var(--gray-500);margin-top:4px">${specs}</div>`:''}</td>`:''}
         <td class="td-mbtu">${r[1]}</td>
         <td class="td-model">${getLink(r[3],r[4],r[7])?`<a href="${getLink(r[3],r[4],r[7])}" target="_blank" class="model-link">${r[3]}</a>`:r[3]}</td>
         <td style="font-size:12px;max-width:340px;white-space:normal">${r[4]}</td>
         <td class="td-price">${fmt(r[5])}</td>
         <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
-      </tr>`).join('')
-    ).join('');
+      </tr>`).join('');
+    }).join('');
     return `<div class="section-group"><div class="section-title">${sec}<span class="section-count">${total} produits</span></div>
       <div class="table-wrap"><div class="table-scroll"><table>
         <thead><tr><th>AHRI</th><th>Puissance</th><th>No. Modèle</th><th>Description</th><th>Prix coutant (CAD)</th><th>Subvention (CAD)</th></tr></thead>
@@ -413,11 +416,9 @@ function renderFullTable(container) {
     <td style="font-size:12px;max-width:320px;white-space:normal">${r[4]}</td>
     <td class="td-price">${fmt(r[5])}</td>
     <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
-    <td class="td-ahri">${r[8]?r[8]+' A':'—'}</td>
-    <td class="td-ahri">${r[9]||'—'}</td>
   </tr>`).join('');
   container.innerHTML=`<div class="full-table-wrap"><div class="table-scroll"><table>
-    <thead><tr><th>Section</th><th>Puissance</th><th>AHRI</th><th>No. Modèle</th><th>Description</th><th>Prix coutant (CAD)</th><th>Subvention (CAD)</th><th>Disjoncteur</th><th>Tuyaux</th></tr></thead>
+    <thead><tr><th>Section</th><th>Puissance</th><th>AHRI</th><th>No. Modèle</th><th>Description</th><th>Prix coutant (CAD)</th><th>Subvention (CAD)</th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div></div>`;
 }
