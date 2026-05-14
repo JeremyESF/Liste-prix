@@ -78,10 +78,24 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
     prix     = round(prix_coutant)
 
-    lien  = str(lien_master).strip() if lien_master else None
-    disco = str(disjoncteur).strip() if disjoncteur else None
-    tuyau = str(lignes_od).strip() if lignes_od else None
-    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien, disco, tuyau])
+    lien       = str(lien_master).strip() if lien_master else None
+    disco      = str(disjoncteur).strip() if disjoncteur else None
+    tuyau      = str(lignes_od).strip() if lignes_od else None
+    type_unite = str(row[2]).strip().lower() if row[2] else ''
+    type_ordre = 0 if 'int' in type_unite else 1
+    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien, disco, tuyau, type_ordre])
+
+# --- Tri : section → MBH croissant → AHRI → intérieure avant extérieure ---
+def sort_key(r):
+    sec_idx = SECTION_ORDER.index(r[0]) if r[0] in SECTION_ORDER else 99
+    try:
+        mbtu_num = float(str(r[1]).split()[0])
+    except Exception:
+        mbtu_num = 999
+    return (sec_idx, mbtu_num, r[2], r[10])
+
+rows.sort(key=sort_key)
+rows = [r[:10] for r in rows]  # retire le champ type_ordre temporaire
 
 # --- Génération du JS ---
 def js_row(r):
