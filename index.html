@@ -355,7 +355,7 @@ function renderCards(container) {
       return `
       <div class="card" onclick="this.classList.toggle('open')">
         <div class="card-header">
-          <div><span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span></div>
+          <div>${ahri.startsWith('__')?'':` <span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span>`}</div>
           <div style="display:flex;align-items:center;gap:6px">
             ${rows[0][1]!=='—'?`<span class="card-mbtu">${rows[0][1]}</span>`:''}
             <span class="card-chevron">▼</span>
