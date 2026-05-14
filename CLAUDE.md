@@ -23,8 +23,8 @@ Tableau JavaScript `rawData` — chaque ligne : `[section, mbtu, ahri, modèle, 
 
 ### Sections de produits (dans l'ordre d'affichage)
 
-1. MURALE (9–36 MBH, 115 V et 230 V)
-2. MURALE MULTIZONE (9–33 MBH)
+1. MURALE À -20°C (9–36 MBH, 115 V et 230 V)
+2. MURALE À -30°C (9–33 MBH)
 3. CASSETTE SIMPLE (12–18 MBH)
 4. CASSETTE 2-4 VOIES (9–18 MBH)
 5. CASSETTE 4 VOIES (24 MBH)
