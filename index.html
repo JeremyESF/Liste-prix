@@ -326,7 +326,10 @@ function renderCards(container) {
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
     const total=Object.values(ahriGroups).flat().length;
-    const cards=Object.entries(ahriGroups).map(([ahri,rows])=>`
+    const cards=Object.entries(ahriGroups).map(([ahri,rows])=>{
+      const totalPrice=rows.reduce((sum,r)=>sum+r[5],0);
+      const subRow=rows.find(r=>r[6]);
+      return `
       <div class="card">
         <div class="card-header">
           <div><span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span></div>
@@ -336,13 +339,14 @@ function renderCards(container) {
           ${rows.map(r=>`<div class="card-unit">
             <div class="card-model">${r[3]}</div>
             <div class="card-desc">${r[4]}</div>
-            <div class="card-prices">
-              <div class="price-tag"><div class="label">Prix liste</div><div class="amount">${fmt(r[5])}</div></div>
-              ${r[6]?`<div class="price-tag sub"><div class="label">Subvention</div><div class="amount">${fmt(r[6])}</div></div>`:''}
-            </div>
           </div>`).join('')}
+          <div class="card-prices" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">
+            <div class="price-tag"><div class="label">Prix total</div><div class="amount">${fmt(totalPrice)}</div></div>
+            ${subRow?`<div class="price-tag sub"><div class="label">Subvention</div><div class="amount">${fmt(subRow[6])}</div></div>`:''}
+          </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     return `<div class="section-group"><div class="section-title">${sec}<span class="section-count">${total} produits</span></div><div class="cards-grid">${cards}</div></div>`;
   }).join('');
 }
