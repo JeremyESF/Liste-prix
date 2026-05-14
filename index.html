@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELIOS 2026 — Liste de Prix</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f2044; --blue: #1a4a8a; --sky: #2d7dd2; --ice: #e8f2fc;
+    --mint: #d4edda; --mint-text: #1a5c2e;
+    --gray-50: #f7f9fc; --gray-100: #edf2f7; --gray-300: #cbd5e0; --gray-500: #718096; --gray-700: #2d3748;
+    --accent: #f0a500; --radius: 10px; --shadow: 0 4px 24px rgba(15,32,68,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gray-50); color: var(--gray-700); min-height: 100vh; }
+
+  header { background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%); color: white; padding: 20px 24px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(15,32,68,0.25); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .header-title h1 { font-size: clamp(16px, 3vw, 24px); font-weight: 700; }
+  .header-title p { font-size: 11px; opacity: 0.6; margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .badge { background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab-btn { background: rgba(255,255,255,0.12); border: none; color: rgba(255,255,255,0.7); padding: 7px 16px; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { background: white; color: var(--navy); font-weight: 700; }
+  .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.2); color: white; }
+  .view-toggle { display: flex; gap: 4px; margin-left: 8px; }
+  .view-btn { background: rgba(255,255,255,0.15); border: none; color: rgba(255,255,255,0.8); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 15px; transition: all 0.15s; }
+  .view-btn.active { background: white; color: var(--navy); }
+
+  .filters-bar { background: white; border-bottom: 1px solid var(--gray-100); padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .filter-group { display: flex; flex-direction: column; gap: 3px; }
+  .filter-group label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray-500); }
+  .filter-group select, .filter-group input { font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1.5px solid var(--gray-300); border-radius: 7px; padding: 6px 10px; color: var(--gray-700); background: var(--gray-50); outline: none; transition: border-color 0.2s; min-width: 130px; }
+  .filter-group select:focus, .filter-group input:focus { border-color: var(--sky); background: white; }
+  .filter-group input { min-width: 200px; }
+  .reset-btn { background: var(--gray-100); border: none; color: var(--gray-500); padding: 7px 14px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; height: 34px; }
+  .reset-btn:hover { background: var(--gray-300); color: var(--gray-700); }
+
+  .stats-bar { padding: 8px 24px; display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--gray-500); border-bottom: 1px solid var(--gray-100); background: white; }
+  .stats-bar strong { color: var(--navy); font-size: 14px; }
+
+  .content { padding: 20px 24px; }
+
+  /* SECTION GROUPS */
+  .section-group { margin-bottom: 24px; }
+  .section-title { display: flex; align-items: center; gap: 10px; background: linear-gradient(90deg, var(--navy), var(--blue)); color: white; padding: 10px 16px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; }
+  .section-count { background: rgba(255,255,255,0.2); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+
+  /* CARDS */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-100); border-top: none; border-radius: 0 0 8px 8px; }
+  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(15,32,68,0.13); }
+  .card-header { background: var(--ice); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-100); }
+  .card-ahri-label { font-size: 10px; color: var(--gray-500); font-family: 'DM Mono', monospace; }
+  .card-ahri-val { font-size: 11px; font-weight: 600; color: var(--navy); font-family: 'DM Mono', monospace; }
+  .card-mbtu { background: var(--accent); color: var(--navy); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; font-family: 'DM Mono', monospace; }
+  .card-body { padding: 12px; }
+  .card-unit { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-100); }
+  .card-unit:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .card-model { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--sky); margin-bottom: 3px; }
+  .card-desc { font-size: 12px; color: var(--gray-700); margin-bottom: 8px; line-height: 1.4; }
+  .card-prices { display: flex; gap: 6px; flex-wrap: wrap; }
+  .price-tag { flex: 1; min-width: 90px; background: var(--ice); border-radius: 7px; padding: 6px 10px; }
+  .price-tag.sub { background: var(--mint); }
+  .price-tag .label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gray-500); margin-bottom: 2px; }
+  .price-tag.sub .label { color: var(--mint-text); }
+  .price-tag .amount { font-size: 13px; font-weight: 700; color: var(--navy); font-family: 'DM Mono', monospace; }
+  .price-tag.sub .amount { color: var(--mint-text); }
+
+  /* TABLE */
+  .table-wrap { border-radius: 0 0 8px 8px; overflow: hidden; border: 1px solid var(--gray-100); border-top: none; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead tr { background: var(--blue); }
+  thead th { color: white; font-weight: 600; padding: 10px 12px; text-align: left; white-space: nowrap; font-size: 11px; }
+  tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody tr:hover { background: var(--ice); }
+  tbody td { padding: 8px 12px; vertical-align: middle; }
+  .td-model { font-family: 'DM Mono', monospace; color: var(--sky); font-size: 12px; white-space: nowrap; }
+  .td-ahri { font-family: 'DM Mono', monospace; color: var(--gray-500); font-size: 11px; white-space: nowrap; }
+  .td-price { font-family: 'DM Mono', monospace; font-weight: 600; color: var(--navy); text-align: right; white-space: nowrap; }
+  .td-sub { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--mint-text); background: var(--mint); text-align: right; padding: 8px 12px; white-space: nowrap; }
+  .td-mbtu { font-weight: 600; color: var(--blue); font-size: 12px; white-space: nowrap; }
+  .no-sub { color: var(--gray-300); font-size: 11px; text-align: right; }
+
+  .full-table-wrap { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; border: 1.5px solid var(--gray-100); }
+  .full-table-wrap thead tr { background: var(--navy); }
+  .td-section { font-weight: 700; color: var(--navy); font-size: 11px; white-space: nowrap; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--gray-500); }
+  .empty p { font-size: 14px; margin-top: 12px; }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    .filters-bar { padding: 10px 14px; }
+    .content { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-title">
+      <h1>ELIOS 2026 — Liste de Prix</h1>
+      <p>Réfrigérant R454B &nbsp;·&nbsp; Révision 30 avril 2026</p>
+    </div>
+    <span class="badge">CAD</span>
+  </div>
+  <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('resume')">📊 Vue Résumé</button>
+      <button class="tab-btn" onclick="switchTab('complet')">📋 Liste Complète</button>
+    </div>
+    <div class="view-toggle" id="viewToggle">
+      <button class="view-btn active" onclick="setView('cards')" title="Cartes">⊞</button>
+      <button class="view-btn" onclick="setView('table')" title="Tableau">☰</button>
+    </div>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>Recherche</label>
+    <input type="text" id="searchInput" placeholder="Modèle, description, AHRI…" oninput="applyFilters()">
+  </div>
+  <div class="filter-group">
+    <label>Section</label>
+    <select id="filterSection" onchange="applyFilters()"><option value="">Toutes</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Puissance</label>
+    <select id="filterMbtu" onchange="applyFilters()"><option value="">Toutes</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Subvention</label>
+    <select id="filterSub" onchange="applyFilters()">
+      <option value="">Tous</option>
+      <option value="oui">Avec subvention</option>
+      <option value="non">Sans subvention</option>
+    </select>
+  </div>
+  <button class="reset-btn" onclick="resetFilters()">✕ Réinitialiser</button>
+</div>
+
+<div class="stats-bar">
+  <span><strong id="countDisplay">0</strong> résultats</span>
+  <span id="subCountDisplay" style="color:var(--mint-text)"></span>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<script>
+// section, mbtu, ahri, model, description, price, subvention
+const rawData = [
+  ["MURALE","12 MBH","216046606","EWHBA12C1AN1","Unité intérieure murale avec thermopompe ELIOS 12 000 BTU/h 115 V",690,null],
+  ["MURALE","12 MBH","216046606","ESHBA12C1AN1","Unité extérieure thermopompe ELIOS 12 000 BTU/h 115V",1567,null],
+  ["MURALE","9 MBH","216046607","EWHBA09C2AN1","Unité intérieure murale avec thermopompe ELIOS 9 000 BTU/h 230 V",665,null],
+  ["MURALE","9 MBH","216046607","ESHBA09C2AN1","Unité extérieure thermopompe ELIOS 9 000 BTU/h 230V",1498,null],
+  ["MURALE","12 MBH","216046608","EWHBA12C2AN1","Unité intérieure murale avec thermopompe ELIOS 12 000 BTU/h 230 V",678,null],
+  ["MURALE","12 MBH","216046608","ESHBA12C2AN1","Thermopompe pour unité extérieure Elios 12 000 BTU/h 230V",1581,null],
+  ["MURALE","18 MBH","216046609","EWHBA18C2AN1","Unité intérieure murale avec thermopompe ELIOS 18 000 BTU/h 230 V",970,null],
+  ["MURALE","18 MBH","216046609","ESHBA18C2AN1","Unité extérieure thermopompe ELIOS 18 000 BTU/h 230V",2494,null],
+  ["MURALE","24 MBH","216046610","EWHBA24C2AN1","Unité intérieure murale avec thermopompe ELIOS 24 000 BTU/h 230 V",1268,2408],
+  ["MURALE","24 MBH","216046610","ESHBA24C2AN1","Unité extérieure thermopompe ELIOS 24 000 BTU/h 230V",2953,null],
+  ["MURALE","30 MBH","216046611","EWHBA30C2AS1","Unité intérieure murale avec thermopompe ELIOS 30 000 BTU/h 230 V",1571,null],
+  ["MURALE","30 MBH","216046611","ESHBA30C2AN1","Thermopompe pour unité extérieure Elios 30 000 BTU/h 230V",3972,null],
+  ["MURALE","36 MBH","216046612","EWHBA36C2AS1","Unité intérieure murale avec thermopompe ELIOS 36 000 BTU/h 230 V",1903,null],
+  ["MURALE","36 MBH","216046612","ESHBA36C2AN1","Thermopompe pour unité extérieure Elios 36 000 BTU/h 230V",4487,null],
+  ["MURALE MULTIZONE","9 MBH","216046613","EWHMA09C2AS1","Unité de thermopompe intérieure murale Elios 9 000 BTU/h 230 V",1059,null],
+  ["MURALE MULTIZONE","9 MBH","216046613","ESHMA09C2AN1","Unité de thermopompe extérieure Elios 9 000 BTU/h 230 V",2667,null],
+  ["MURALE MULTIZONE","12 MBH","216046614","EWHMA12C2AS1","Unité de thermopompe intérieure murale Elios 12 000 BTU/h 230 V",1100,1400],
+  ["MURALE MULTIZONE","12 MBH","216046614","ESHMA12C2AN1","Unité de thermopompe extérieure Elios 12 000 BTU/h 230 V",2813,null],
+  ["MURALE MULTIZONE","15 MBH","218082865","EWHMA15C2AS1","Thermopompe murale intérieure ELIOS 15 KBTU avec kit RDS",1347,2016],
+  ["MURALE MULTIZONE","15 MBH","218082865","ESHMA15C2AN1","Thermopompe extérieure ELIOS 15 KBTU CC-30C",3186,null],
+  ["MURALE MULTIZONE","18 MBH","216046615","EWHMA18C2AS1","Unité de thermopompe intérieure murale Elios 18 000 BTU/h 230 V",1461,2016],
+  ["MURALE MULTIZONE","18 MBH","216046615","ESHMA18C2AN1","Unité de thermopompe extérieure Elios 18 000 BTU/h 230 V",3297,null],
+  ["MURALE MULTIZONE","24 MBH","216046616","EWHMA24C2AS1","Unité de thermopompe intérieure murale Elios 24 000 BTU/h 230 V",1790,3024],
+  ["MURALE MULTIZONE","24 MBH","216046616","ESHMA24C2AN1","Unité de thermopompe extérieure Elios 24 000 BTU/h 230 V",4492,null],
+  ["MURALE MULTIZONE","33 MBH","216046617","EWHMA33C2AS1","Unité de thermopompe intérieure murale Elios 33 000 BTU/h 230 V",2051,4144],
+  ["MURALE MULTIZONE","33 MBH","216046617","ESHMA33C2AN1","Unité de thermopompe extérieure Elios 33 000 BTU/h 230V",5574,null],
+  ["CASSETTE SIMPLE","12 MBH","216505507","GOHRA12C2AS1","Thermopompe à cassette unidirectionnelle 6-9 000 BTU, unité intérieure avec grille",2210,1204],
+  ["CASSETTE SIMPLE","12 MBH","216505507","ESHEA12C2AN1","Unité de Thermopompe extérieure Elios 12 000 BTU/h 230 V",2466,null],
+  ["CASSETTE SIMPLE","18 MBH","216046625","GOHRA18C2AS1","Thermopompe à cassette Simple Way 12-18 000 BTU, unité intérieure",2375,1960],
+  ["CASSETTE SIMPLE","18 MBH","216046625","ESHEA18C2AN1","Unité de Thermopompe extérieure Elios 18 000 BTU/h 230 V",3298,null],
+  ["CASSETTE 2-4 VOIES","9 MBH","216046618","GKHRA09C2AS1","Thermopompe à cassette de plafond, unité intérieure de 9 000 BTU",1725,null],
+  ["CASSETTE 2-4 VOIES","9 MBH","216046618","ESHEA09C2AN1","Unité de Thermopompe extérieure Elios 9 000 BTU/h 230 V",2387,null],
+  ["CASSETTE 2-4 VOIES","12 MBH","216046619","GKHRA12C2AS1","Thermopompe à cassette de plafond 12 000 BTU, unité intérieure",1836,1190],
+  ["CASSETTE 2-4 VOIES","12 MBH","216046619","ESHEA12C2AN1","Unité de Thermopompe extérieure Elios 12 000 BTU/h 230 V",2466,null],
+  ["CASSETTE 2-4 VOIES","18 MBH","216046620","GKHRA18C2AS1","Thermopompe à cassette de plafond 18 000 BTU, unité intérieure",2102,1946],
+  ["CASSETTE 2-4 VOIES","18 MBH","216046620","ESHEA18C2AN1","Unité de Thermopompe extérieure Elios 18 000 BTU/h 230 V",3298,null],
+  ["GRILLE","9-12-18 MBH","—","K0918AGRL","Grille (compact cassette)",217,null],
+  ["CASSETTE 4 VOIES","24 MBH","216046621","GQHRA24C2AS1","Thermopompe à cassette de plafond 24 000 BTU, unité intérieure",2263,2856],
+  ["CASSETTE 4 VOIES","24 MBH","216046621","ESHEA24C2AN1","Unité de Thermopompe extérieure Elios 24 000 BTU/h 230 V",3964,null],
+  ["GRILLE","24/36/48 MBH","—","Q2448AGRL","Grille (large 4 way cassettes)",317,null],
+  ["CASSETTE 3-4 VOIES","36 MBH","216046622","GQHLA36R2AS1","Thermopompe à cassette de plafond 36 000 BTU, unité intérieure",2789,3752],
+  ["CASSETTE 3-4 VOIES","36 MBH","216046622","ESHUA36R2AN1","Unité de thermopompe extérieure Elios 36 000 BTU/h 230 V",6689,null],
+  ["CASSETTE 3-4 VOIES","48 MBH","216046623","GQHLA48R2AS1","Thermopompe à cassette de plafond 48 000 BTU, unité intérieure",3045,5124],
+  ["CASSETTE 3-4 VOIES","48 MBH","216046623","ESHUA48R2AN1","Unité de thermopompe extérieure Elios 48 000 BTU/h 230 V",9026,null],
+  ["GRILLE","36-48 MBH","—","Q2448AGRL","Grille (large 4 way cassettes)",317,null],
+  ["UNITÉ GAINABLE","9 MBH","216046626","GDHRA09C2AS1","Unité intérieure à thermopompe canalisée de 9 000 BTU",1976,null],
+  ["UNITÉ GAINABLE","9 MBH","216046626","ESHEA09C2AN1","Unité de Thermopompe extérieure Elios 9 000 BTU/h 230 V",2387,null],
+  ["UNITÉ GAINABLE","12 MBH","216046627","GDHRA12C2AS1","Thermopompe canalisée 12 000 BTU, unité intérieure",2075,1274],
+  ["UNITÉ GAINABLE","12 MBH","216046627","ESHEA12C2AN1","Unité de Thermopompe extérieure Elios 12 000 BTU/h 230 V",2466,null],
+  ["UNITÉ GAINABLE","18 MBH","216046628","GDHRA18C2AS1","Thermopompe canalisée 18 000 BTU, unité intérieure",2446,2086],
+  ["UNITÉ GAINABLE","18 MBH","216046628","ESHEA18C2AN1","Unité de Thermopompe extérieure Elios 18 000 BTU/h 230 V",3298,null],
+  ["UNITÉ GAINABLE","24 MBH","216046629","GDHRA24C2AS1","Thermopompe canalisée 24 000 BTU, unité intérieure",2693,2968],
+  ["UNITÉ GAINABLE","24 MBH","216046629","ESHEA24C2AN1","Unité de Thermopompe extérieure Elios 24 000 BTU/h 230 V",3964,null],
+  ["UNITÉ GAINABLE","36 MBH","216046630","GDHLA36R2AS1","Unité intérieure à thermopompe canalisée de 36 000 BTU",3222,null],
+  ["UNITÉ GAINABLE","36 MBH","216046630","ESHUA36R2AN1","Unité de thermopompe extérieure Elios 36 000 BTU/h 230 V",6689,null],
+  ["UNITÉ GAINABLE","48 MBH","216046631","GDHLA48R2AS1","Thermopompe canalisée 48 000 BTU, unité intérieure",3645,5460],
+  ["UNITÉ GAINABLE","48 MBH","216046631","ESHUA48R2AN1","Unité de thermopompe extérieure Elios 48 000 BTU/h 230 V",9026,null],
+  ["UNITÉ GAINABLE","60 MBH","216046632","GDHLA60R2AS1","Thermopompe canalisée 60 000 BTU, unité intérieure",4795,null],
+  ["UNITÉ GAINABLE","60 MBH","216046632","ESHUA60R2AN1","Unité de thermopompe extérieure Elios 60 000 BTU/h 230V",10159,null],
+  ["CONSOLE","12 MBH","216046633","GFHRA12C2AS1","Thermopompe console à montage au sol 12 000 BTU/h, unité intérieure",1544,1260],
+  ["CONSOLE","12 MBH","216046633","ESHEA12C2AN1","Unité de Thermopompe extérieure Elios 12 000 BTU/h 230 V",2466,null],
+  ["WALL UTA","18 MBH","217177262","GGHLA18R4AS1","Unité de traitement d'air murale Elios 18 000 BTU/h 115 V avec kit RDS",2228,null],
+  ["WALL UTA","18 MBH","217177262","ESHEA18R2AN1","Unité extérieure thermopompe ELIOS 24 000 BTU/h 230V",2661,null],
+  ["WALL UTA","24 MBH","217177263","GGHLA24R4AS1","Unité de traitement d'air murale Elios 24 000 BTU/h 115 V avec kit RDS",2265,2912],
+  ["WALL UTA","24 MBH","217177263","ESHEA24R2AN1","Thermopompe pour unité extérieure Elios 30 000 BTU/h 230V",3725,null],
+  ["WALL UTA","30 MBH","217177264","GGHLA30R4AS1","Unité de traitement d'air murale Elios 30 000 BTU/h 115 V avec kit RDS",2591,null],
+  ["WALL UTA","30 MBH","217177264","ESHEA30R2AN1","Thermopompe pour unité extérieure ELIOS 36 000 BTU/h 230V",4617,null],
+  ["WALL UTA","36 MBH","217177265","GGHLA36R4AS1","Unité de traitement d'air murale Elios 36 000 BTU/h 115 V avec kit RDS",2628,3472],
+  ["WALL UTA","36 MBH","217177265","ESHEA36R2AN1","Unité extérieure thermopompe ELIOS 18 000 BTU/h 230V",5309,null],
+  ["UTA - ELECTRIC HEATER","—","—","EAH03CUL","Electric Heater 3 kW",333,null],
+  ["UTA - ELECTRIC HEATER","—","—","EAH05CUL","Electric Heater 5 kW",371,null],
+  ["UTA - ELECTRIC HEATER","—","—","EAH08CUL","Electric Heater 8 kW",479,null],
+  ["UTA - ELECTRIC HEATER","—","—","EAH10CUL","Electric Heater 10 kW",512,null],
+  ["PANCAKE","18 MBH","217177266","GPHLA18R4AS1","Thermopompe Pancake 18 000 BTU/h, unité intérieure",3014,null],
+  ["PANCAKE","18 MBH","217177266","ESHEA18R2AN1","Unité extérieure thermopompe ELIOS 24 000 BTU/h 230V",2661,null],
+  ["PANCAKE","24 MBH","217177267","GPHLA24R4AS1","Thermopompe Pancake 24 000 BTU/h, unité intérieure",3163,2772],
+  ["PANCAKE","24 MBH","217177267","ESHEA24R2AN1","Thermopompe pour unité extérieure Elios 30 000 BTU/h 230V",3725,null],
+  ["PANCAKE","30 MBH","217177268","GPHLA30R4AS1","Thermopompe Pancake 30 000 BTU/h, unité intérieure",3343,null],
+  ["PANCAKE","30 MBH","217177268","ESHEA30R2AN1","Thermopompe pour unité extérieure ELIOS 36 000 BTU/h 230V",4617,null],
+  ["PANCAKE","36 MBH","217177269","GPHLA36R4AS1","Thermopompe Elios Pancake 36 000 BTU/h, unité intérieure 115 V",3492,3444],
+  ["PANCAKE","36 MBH","217177269","ESHEA36R2AN1","Unité extérieure thermopompe ELIOS 18 000 BTU/h 230V",5309,null],
+  ["PANCAKE ELECTRIC HEATER","—","—","EAH03DUL","Electric Heater 3 kW",470,null],
+  ["PANCAKE ELECTRIC HEATER","—","—","EAH05DUL","Electric Heater 5 kW",514,null],
+  ["PANCAKE ELECTRIC HEATER","—","—","EAH08DUL","Electric Heater 8 kW",562,null],
+  ["PANCAKE ELECTRIC HEATER","—","—","EAH10DUL","Electric Heater 10 kW",612,null],
+  ["FLOOR CEILING MOUNT","36 MBH","216046634","GVHLA36R2AS1","Thermopompe pour montage au sol et au plafond, unité intérieure de 36 000 BTU",2861,null],
+  ["FLOOR CEILING MOUNT","36 MBH","216046634","ESHUA36R2AN1","Unité de thermopompe extérieure Elios 36 000 BTU/h 230 V",6689,null],
+  ["FLOOR CEILING MOUNT","48 MBH","216046635","GVHLA48R2AS1","Thermopompe pour montage au sol et au plafond, unité intérieure de 48 000 BTU",3028,5530],
+  ["FLOOR CEILING MOUNT","48 MBH","216046635","ESHUA48R2AN1","Unité de thermopompe extérieure Elios 48 000 BTU/h 230 V",9026,null],
+];
+
+const sectionOrder = ["MURALE","MURALE MULTIZONE","CASSETTE SIMPLE","CASSETTE 2-4 VOIES","CASSETTE 4 VOIES","CASSETTE 3-4 VOIES","GRILLE","UNITÉ GAINABLE","CONSOLE","WALL UTA","UTA - ELECTRIC HEATER","PANCAKE","PANCAKE ELECTRIC HEATER","FLOOR CEILING MOUNT"];
+
+let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
+
+const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2})+' $';
+
+function populateFilters() {
+  const secs = [...new Set(rawData.map(r=>r[0]))].sort((a,b)=>(sectionOrder.indexOf(a)||99)-(sectionOrder.indexOf(b)||99));
+  const mbtus = [...new Set(rawData.map(r=>r[1]).filter(v=>v!=='—'))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+  populateSelect('filterSection', secs);
+  populateSelect('filterMbtu', mbtus);
+}
+
+function populateSelect(id, vals) {
+  const sel = document.getElementById(id);
+  while(sel.options.length>1) sel.remove(1);
+  vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sec = document.getElementById('filterSection').value;
+  const mbtu = document.getElementById('filterMbtu').value;
+  const sub = document.getElementById('filterSub').value;
+  filtered = rawData.filter(r => {
+    if(sec && r[0]!==sec) return false;
+    if(mbtu && r[1]!==mbtu) return false;
+    if(sub==='oui' && !r[6]) return false;
+    if(sub==='non' && r[6]) return false;
+    if(search && ![r[2],r[3],r[4],r[1]].join(' ').toLowerCase().includes(search)) return false;
+    return true;
+  });
+  render();
+}
+
+function resetFilters() {
+  ['searchInput'].forEach(id=>document.getElementById(id).value='');
+  ['filterSection','filterMbtu','filterSub'].forEach(id=>document.getElementById(id).value='');
+  filtered=[...rawData]; render();
+}
+
+function switchTab(tab) {
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='resume')||(i===1&&tab==='complet')));
+  document.getElementById('viewToggle').style.display = tab==='resume'?'flex':'none';
+  render();
+}
+
+function setView(v) {
+  currentView=v;
+  document.querySelectorAll('.view-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='cards')||(i===1&&v==='table')));
+  render();
+}
+
+function groupBySection(rows) {
+  const groups={}, order=[];
+  rows.forEach(r=>{
+    if(!groups[r[0]]){groups[r[0]]={};order.push(r[0]);}
+    if(!groups[r[0]][r[2]]) groups[r[0]][r[2]]=[];
+    groups[r[0]][r[2]].push(r);
+  });
+  order.sort((a,b)=>{const ia=sectionOrder.indexOf(a),ib=sectionOrder.indexOf(b);return(ia===-1?99:ia)-(ib===-1?99:ib);});
+  return {groups,order};
+}
+
+function render() {
+  const container=document.getElementById('mainContent');
+  const subCount=filtered.filter(r=>r[6]).length;
+  document.getElementById('countDisplay').textContent=filtered.length;
+  document.getElementById('subCountDisplay').textContent=subCount>0?`· ${subCount} avec subvention 💚`:'';
+  if(!filtered.length){container.innerHTML=`<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Aucun résultat pour ces filtres.</p></div>`;return;}
+  if(currentTab==='resume') currentView==='cards'?renderCards(container):renderTable(container);
+  else renderFullTable(container);
+}
+
+function renderCards(container) {
+  const {groups,order}=groupBySection(filtered);
+  container.innerHTML=order.map(sec=>{
+    const ahriGroups=groups[sec];
+    const total=Object.values(ahriGroups).flat().length;
+    const cards=Object.entries(ahriGroups).map(([ahri,rows])=>`
+      <div class="card">
+        <div class="card-header">
+          <div><span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span></div>
+          ${rows[0][1]!=='—'?`<span class="card-mbtu">${rows[0][1]}</span>`:''}
+        </div>
+        <div class="card-body">
+          ${rows.map(r=>`<div class="card-unit">
+            <div class="card-model">${r[3]}</div>
+            <div class="card-desc">${r[4]}</div>
+            <div class="card-prices">
+              <div class="price-tag"><div class="label">Prix liste</div><div class="amount">${fmt(r[5])}</div></div>
+              ${r[6]?`<div class="price-tag sub"><div class="label">Subvention</div><div class="amount">${fmt(r[6])}</div></div>`:''}
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>`).join('');
+    return `<div class="section-group"><div class="section-title">${sec}<span class="section-count">${total} produits</span></div><div class="cards-grid">${cards}</div></div>`;
+  }).join('');
+}
+
+function renderTable(container) {
+  const {groups,order}=groupBySection(filtered);
+  container.innerHTML=order.map(sec=>{
+    const ahriGroups=groups[sec];
+    const total=Object.values(ahriGroups).flat().length;
+    const rows=Object.entries(ahriGroups).map(([ahri,rws])=>
+      rws.map((r,i)=>`<tr>
+        ${i===0?`<td class="td-ahri" rowspan="${rws.length}" style="border-right:2px solid var(--gray-100);vertical-align:middle;background:var(--gray-50)">${ahri}</td>`:''}
+        <td class="td-mbtu">${r[1]}</td>
+        <td class="td-model">${r[3]}</td>
+        <td style="font-size:12px;max-width:340px;white-space:normal">${r[4]}</td>
+        <td class="td-price">${fmt(r[5])}</td>
+        <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
+      </tr>`).join('')
+    ).join('');
+    return `<div class="section-group"><div class="section-title">${sec}<span class="section-count">${total} produits</span></div>
+      <div class="table-wrap"><div class="table-scroll"><table>
+        <thead><tr><th>AHRI</th><th>Puissance</th><th>No. Modèle</th><th>Description</th><th>Prix liste (CAD)</th><th>Subvention (CAD)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div></div></div>`;
+  }).join('');
+}
+
+function renderFullTable(container) {
+  const rows=filtered.map(r=>`<tr>
+    <td class="td-section">${r[0]}</td>
+    <td class="td-mbtu">${r[1]}</td>
+    <td class="td-ahri">${r[2]}</td>
+    <td class="td-model">${r[3]}</td>
+    <td style="font-size:12px;max-width:320px;white-space:normal">${r[4]}</td>
+    <td class="td-price">${fmt(r[5])}</td>
+    <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
+  </tr>`).join('');
+  container.innerHTML=`<div class="full-table-wrap"><div class="table-scroll"><table>
+    <thead><tr><th>Section</th><th>Puissance</th><th>AHRI</th><th>No. Modèle</th><th>Description</th><th>Prix liste (CAD)</th><th>Subvention (CAD)</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div></div>`;
+}
+
+populateFilters();
+render();
+</script>
+</body>
+</html>
