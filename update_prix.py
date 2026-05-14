@@ -6,18 +6,25 @@ FICHIER_EXCEL = 'ELIOS_2026_DB_3.xlsx'
 ONGLET        = 'ELIOS_2026_DB'
 FICHIER_HTML  = 'index.html'
 
-# Noms d'affichage dans l'app — modifie ici si tu veux changer un nom de section
+# Mapping par (categorie, sous_categorie) — prioritaire sur le mapping par catégorie seule
+SECTION_MAP_DETAIL = {
+    ('Accessoires', 'Couvercles et articles d\'installation'): 'GRILLES CASSETTE',
+    ('Accessoires', 'Options électriques')                  : 'ÉLÉMENTS CHAUFFANTS',
+    ('Central-Elios UTA', 'Éléments chauffants électriques'): 'ÉLÉMENTS CHAUFFANTS',
+}
+
+# Mapping par catégorie seule (fallback)
 SECTION_MAP = {
-    'Murale -20C'                    : 'MURALE À -20°C',
-    'Murale -30C'                    : 'MURALE À -30°C',
-    'Cassette Simple (1 voie)'       : 'CASSETTE SIMPLE',
-    'Cassette 4 Voies'               : 'CASSETTE 4 VOIES',
+    'Murale -20C'                      : 'MURALE À -20°C',
+    'Murale -30C'                      : 'MURALE À -30°C',
+    'Cassette Simple (1 voie)'         : 'CASSETTE SIMPLE',
+    'Cassette 4 Voies'                 : 'CASSETTE 4 VOIES',
     'Cassette 4 Voies Commercial Léger': 'CASSETTE COMMERCIAL LÉGER',
-    'Gainable Moyenne Pression'      : 'GAINABLE MOYENNE PRESSION',
-    'Gainable Commercial Léger'      : 'GAINABLE COMMERCIAL LÉGER',
-    'Console (Montage au sol)'       : 'CONSOLE',
-    'Central-Elios UTA'              : 'CENTRAL-ELIOS UTA',
-    'Accessoires'                    : 'ACCESSOIRES',
+    'Gainable Moyenne Pression'        : 'GAINABLE MOYENNE PRESSION',
+    'Gainable Commercial Léger'        : 'GAINABLE COMMERCIAL LÉGER',
+    'Console (Montage au sol)'         : 'CONSOLE',
+    'Central-Elios UTA'                : 'CENTRAL-ELIOS UTA',
+    'Accessoires'                      : 'ACCESSOIRES',
 }
 
 # Ordre d'affichage des sections dans l'app
@@ -31,6 +38,8 @@ SECTION_ORDER = [
     'GAINABLE COMMERCIAL LÉGER',
     'CONSOLE',
     'CENTRAL-ELIOS UTA',
+    'GRILLES CASSETTE',
+    'ÉLÉMENTS CHAUFFANTS',
     'ACCESSOIRES',
 ]
 
@@ -42,6 +51,7 @@ rows = []
 skipped = 0
 for row in ws.iter_rows(min_row=2, values_only=True):
     categorie   = row[0]
+    sous_cat    = row[1]
     mbh         = row[3]
     no_modele   = row[4]
     description = row[5]
@@ -61,7 +71,8 @@ for row in ws.iter_rows(min_row=2, values_only=True):
         skipped += 1
         continue
 
-    section  = SECTION_MAP.get(categorie, str(categorie).upper() if categorie else 'AUTRE')
+    section  = SECTION_MAP_DETAIL.get((categorie, sous_cat),
+               SECTION_MAP.get(categorie, str(categorie).upper() if categorie else 'AUTRE'))
     mbtu     = str(mbh) if mbh and str(mbh).strip() not in ('', '—') else '—'
     ahri_str = str(int(ahri)) if isinstance(ahri, (int, float)) else (str(ahri) if ahri else '—')
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
