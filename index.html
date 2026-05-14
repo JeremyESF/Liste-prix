@@ -413,9 +413,11 @@ function renderFullTable(container) {
     <td style="font-size:12px;max-width:320px;white-space:normal">${r[4]}</td>
     <td class="td-price">${fmt(r[5])}</td>
     <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
+    <td class="td-ahri">${r[8]?r[8]+' A':'—'}</td>
+    <td class="td-ahri">${r[9]||'—'}</td>
   </tr>`).join('');
   container.innerHTML=`<div class="full-table-wrap"><div class="table-scroll"><table>
-    <thead><tr><th>Section</th><th>Puissance</th><th>AHRI</th><th>No. Modèle</th><th>Description</th><th>Prix coutant (CAD)</th><th>Subvention (CAD)</th></tr></thead>
+    <thead><tr><th>Section</th><th>Puissance</th><th>AHRI</th><th>No. Modèle</th><th>Description</th><th>Prix coutant (CAD)</th><th>Subvention (CAD)</th><th>Disjoncteur</th><th>Tuyaux</th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div></div>`;
 }
