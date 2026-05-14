@@ -46,6 +46,8 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     no_modele   = row[4]
     description = row[5]
     ahri        = row[6]
+    disjoncteur  = row[8]
+    lignes_od    = row[9]
     prix_coutant = row[12]
     subvention   = row[13]
     lien_master  = row[14] if len(row) > 14 else None
@@ -65,8 +67,10 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
     prix     = round(prix_coutant)
 
-    lien = str(lien_master).strip() if lien_master else None
-    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien])
+    lien  = str(lien_master).strip() if lien_master else None
+    disco = str(disjoncteur).strip() if disjoncteur else None
+    tuyau = str(lignes_od).strip() if lignes_od else None
+    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien, disco, tuyau])
 
 # --- Génération du JS ---
 def js_row(r):
@@ -78,7 +82,9 @@ def js_row(r):
     prix        = str(r[5])
     sub         = str(r[6]) if r[6] is not None else 'null'
     lien        = json.dumps(r[7], ensure_ascii=False) if r[7] else 'null'
-    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien}]'
+    disco       = json.dumps(r[8], ensure_ascii=False) if r[8] else 'null'
+    tuyau       = json.dumps(r[9], ensure_ascii=False) if r[9] else 'null'
+    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien},{disco},{tuyau}]'
 
 raw_data_js    = 'const rawData = [\n' + ',\n'.join(js_row(r) for r in rows) + '\n];'
 section_ord_js = 'const sectionOrder = ' + json.dumps(SECTION_ORDER, ensure_ascii=False) + ';'
