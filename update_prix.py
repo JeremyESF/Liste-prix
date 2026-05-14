@@ -35,7 +35,7 @@ SECTION_ORDER = [
 ]
 
 # --- Lecture du Excel ---
-wb = openpyxl.load_workbook(FICHIER_EXCEL)
+wb = openpyxl.load_workbook(FICHIER_EXCEL, data_only=True)
 ws = wb[ONGLET]
 
 rows = []
@@ -46,14 +46,14 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     no_modele   = row[4]
     description = row[5]
     ahri        = row[6]
-    prix_liste  = row[11]
-    subvention  = row[13]
+    prix_coutant = row[12]
+    subvention   = row[13]
 
-    if not no_modele or prix_liste is None:
+    if not no_modele or prix_coutant is None:
         skipped += 1
         continue
     try:
-        prix_liste = float(str(prix_liste).replace(',', '.'))
+        prix_coutant = float(str(prix_coutant).replace(',', '.'))
     except (ValueError, TypeError):
         skipped += 1
         continue
@@ -62,7 +62,7 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     mbtu     = str(mbh) if mbh and str(mbh).strip() not in ('', '—') else '—'
     ahri_str = str(int(ahri)) if isinstance(ahri, (int, float)) else (str(ahri) if ahri else '—')
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
-    prix     = int(prix_liste)
+    prix     = round(prix_coutant)
 
     rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub])
 
