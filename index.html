@@ -69,6 +69,8 @@
   .card-unit { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-100); }
   .card-unit:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
   .card-model { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--sky); margin-bottom: 3px; }
+  .model-link { color: inherit; text-decoration: none; border-bottom: 1px dashed currentColor; }
+  .model-link:hover { opacity: 0.75; }
   .card-desc { font-size: 12px; color: var(--gray-700); margin-bottom: 8px; line-height: 1.4; }
   .card-prices { display: flex; gap: 6px; flex-wrap: wrap; }
   .price-tag { flex: 1; min-width: 90px; background: var(--ice); border-radius: 7px; padding: 6px 10px; }
@@ -248,6 +250,16 @@ let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 
 const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0})+' $';
 
+function slugify(str) {
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/\//g,'-').replace(/[^a-z0-9\s-]/g,'')
+    .replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+}
+function masterUrl(model, desc) {
+  return `https://www.master.ca/professionnel/${slugify(desc)}-${model.toLowerCase()}`;
+}
+
 function populateFilters() {
   const secs = [...new Set(rawData.map(r=>r[0]))].sort((a,b)=>(sectionOrder.indexOf(a)||99)-(sectionOrder.indexOf(b)||99));
   const mbtus = [...new Set(rawData.map(r=>r[1]).filter(v=>v!=='—'))].sort((a,b)=>parseFloat(a)-parseFloat(b));
@@ -336,7 +348,7 @@ function renderCards(container) {
         </div>
         <div class="card-body">
           ${rows.map(r=>`<div class="card-unit">
-            <div class="card-model">${r[3]}</div>
+            <div class="card-model"><a href="${masterUrl(r[3],r[4])}" target="_blank" onclick="event.stopPropagation()" class="model-link">${r[3]}</a></div>
             <div class="card-desc">${r[4]}</div>
             <div class="card-prices">
               <div class="price-tag"><div class="label">Prix coutant</div><div class="amount">${fmt(r[5])}</div></div>
@@ -363,7 +375,7 @@ function renderTable(container) {
       rws.map((r,i)=>`<tr>
         ${i===0?`<td class="td-ahri" rowspan="${rws.length}" style="border-right:2px solid var(--gray-100);vertical-align:middle;background:var(--gray-50)">${ahri}</td>`:''}
         <td class="td-mbtu">${r[1]}</td>
-        <td class="td-model">${r[3]}</td>
+        <td class="td-model"><a href="${masterUrl(r[3],r[4])}" target="_blank" class="model-link">${r[3]}</a></td>
         <td style="font-size:12px;max-width:340px;white-space:normal">${r[4]}</td>
         <td class="td-price">${fmt(r[5])}</td>
         <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
@@ -382,7 +394,7 @@ function renderFullTable(container) {
     <td class="td-section">${r[0]}</td>
     <td class="td-mbtu">${r[1]}</td>
     <td class="td-ahri">${r[2]}</td>
-    <td class="td-model">${r[3]}</td>
+    <td class="td-model"><a href="${masterUrl(r[3],r[4])}" target="_blank" class="model-link">${r[3]}</a></td>
     <td style="font-size:12px;max-width:320px;white-space:normal">${r[4]}</td>
     <td class="td-price">${fmt(r[5])}</td>
     <td class="${r[6]?'td-sub':'no-sub'}">${r[6]?fmt(r[6]):'—'}</td>
