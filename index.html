@@ -49,8 +49,18 @@
 
   /* CARDS */
   .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-100); border-top: none; border-radius: 0 0 8px 8px; }
-  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
   .card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(15,32,68,0.13); }
+  .card-chevron { font-size: 9px; opacity: 0.5; color: var(--navy); transition: transform 0.2s; display: inline-block; }
+  .card.open .card-chevron { transform: rotate(180deg); }
+  .card-sub-row { margin-top: 10px; padding: 7px 10px; background: var(--mint); border-radius: 7px; display: flex; justify-content: space-between; align-items: center; }
+  .card-sub-row .sub-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--mint-text); }
+  .card-sub-row .sub-amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700; color: var(--mint-text); }
+  .card-expand { display: none; padding: 10px 12px; gap: 6px; flex-wrap: wrap; border-top: 2px dashed var(--gray-100); background: var(--ice); }
+  .card.open .card-expand { display: flex; }
+  .price-tag.total { background: var(--navy); }
+  .price-tag.total .label { color: rgba(255,255,255,0.55); }
+  .price-tag.total .amount { color: white; }
   .card-header { background: var(--ice); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gray-100); }
   .card-ahri-label { font-size: 10px; color: var(--gray-500); font-family: 'DM Mono', monospace; }
   .card-ahri-val { font-size: 11px; font-weight: 600; color: var(--navy); font-family: 'DM Mono', monospace; }
@@ -330,20 +340,27 @@ function renderCards(container) {
       const totalPrice=rows.reduce((sum,r)=>sum+r[5],0);
       const subRow=rows.find(r=>r[6]);
       return `
-      <div class="card">
+      <div class="card" onclick="this.classList.toggle('open')">
         <div class="card-header">
           <div><span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span></div>
-          ${rows[0][1]!=='—'?`<span class="card-mbtu">${rows[0][1]}</span>`:''}
+          <div style="display:flex;align-items:center;gap:6px">
+            ${rows[0][1]!=='—'?`<span class="card-mbtu">${rows[0][1]}</span>`:''}
+            <span class="card-chevron">▼</span>
+          </div>
         </div>
         <div class="card-body">
           ${rows.map(r=>`<div class="card-unit">
             <div class="card-model">${r[3]}</div>
             <div class="card-desc">${r[4]}</div>
+            <div class="card-prices">
+              <div class="price-tag"><div class="label">Prix liste</div><div class="amount">${fmt(r[5])}</div></div>
+            </div>
           </div>`).join('')}
-          <div class="card-prices" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">
-            <div class="price-tag"><div class="label">Prix total</div><div class="amount">${fmt(totalPrice)}</div></div>
-            ${subRow?`<div class="price-tag sub"><div class="label">Subvention</div><div class="amount">${fmt(subRow[6])}</div></div>`:''}
-          </div>
+          ${subRow?`<div class="card-sub-row"><span class="sub-label">Subvention disponible</span><span class="sub-amount">${fmt(subRow[6])}</span></div>`:''}
+        </div>
+        <div class="card-expand">
+          <div class="price-tag total"><div class="label">Prix total</div><div class="amount">${fmt(totalPrice)}</div></div>
+          ${subRow?`<div class="price-tag sub"><div class="label">Total après subvention</div><div class="amount">${fmt(totalPrice-subRow[6])}</div></div>`:''}
         </div>
       </div>`;
     }).join('');
