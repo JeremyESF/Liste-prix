@@ -326,8 +326,9 @@ function groupBySection(rows) {
   const groups={}, order=[];
   rows.forEach(r=>{
     if(!groups[r[0]]){groups[r[0]]={};order.push(r[0]);}
-    if(!groups[r[0]][r[2]]) groups[r[0]][r[2]]=[];
-    groups[r[0]][r[2]].push(r);
+    const key = r[2]==='—' ? `__${r[3]}` : r[2];
+    if(!groups[r[0]][key]) groups[r[0]][key]=[];
+    groups[r[0]][key].push(r);
   });
   order.sort((a,b)=>{const ia=sectionOrder.indexOf(a),ib=sectionOrder.indexOf(b);return(ia===-1?99:ia)-(ib===-1?99:ib);});
   return {groups,order};
