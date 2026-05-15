@@ -73,6 +73,9 @@ for row in ws.iter_rows(min_row=2, values_only=True):
 
     section  = SECTION_MAP_DETAIL.get((categorie, sous_cat),
                SECTION_MAP.get(categorie, str(categorie).upper() if categorie else 'AUTRE'))
+    # Grilles identifiables par le numéro de modèle (peu importe la catégorie Excel)
+    if 'GRL' in str(no_modele).upper():
+        section = 'GRILLES CASSETTE'
     mbtu     = str(mbh) if mbh and str(mbh).strip() not in ('', '—') else '—'
     ahri_str = str(int(ahri)) if isinstance(ahri, (int, float)) else (str(ahri) if ahri else '—')
     sub      = int(subvention) if isinstance(subvention, (int, float)) and subvention else None
