@@ -437,6 +437,38 @@ function printSubmission() {
   <div class="prix">Prix : ${fmtPrint(grandTotal)}$ + TAXES</div>
   ${subTotal?`<div class="subv">Subvention Hydro Québec : $ ${fmtPrint(subTotal)}</div>`:''}
   <div class="footer">Page 1 | 2</div>
+
+  <div style="page-break-before:always">
+    <div class="trav-title" style="margin-top:0">Non-Inclus :</div>
+    <ul style="margin-top:6px">
+      <li>Tout autre matériel ou main d'œuvre non mentionné dans la section 'inclus'.</li>
+    </ul>
+
+    <div class="trav-title">Conditions :</div>
+    <ul style="margin-top:6px">
+      <li>Termes de paiement : NET 30 jours, sujet à l'approbation du crédit</li>
+      <li>Soumission valide pour 30 jours.</li>
+      <li>Les garanties sont celles du manufacturier.</li>
+      <li>Les biens vendus demeurent la propriété de Les Entreprises Serge Fortin Service Inc. jusqu'au paiement final du prix total du présent projet.</li>
+      <li>À défaut de paiement du prix total conformément à la présente soumission, l'entrepreneur a droit à son option d'exiger le solde dû en capital, frais et intérêts ou de reprendre possession desdits biens sans indemnité ni remise des sommes déjà reçues et, dans ce dernier cas libéré le client du solde du présent projet.</li>
+    </ul>
+
+    <p style="margin:28px 0 20px">Veuillez retourner cette soumission signée avec votre numéro de bon de commande à :</p>
+
+    <div style="margin-left:40px;margin-bottom:50px;line-height:1.6">
+      <div>Nathalie Beaudoin</div>
+      <div>Coordonnatrice de projets</div>
+      <div style="margin-top:6px;font-family:'Brush Script MT',cursive;font-size:18pt">Nathalie Beaudoin</div>
+    </div>
+
+    <div style="border:2px solid #000;padding:28px 24px;line-height:2.6">
+      <div><strong>Lu et approuvé par :</strong> __________________________________ &nbsp; <strong>le :</strong> ______________________</div>
+      <div><strong>Signature :</strong> _______________________________________________</div>
+      <div><strong>P.O. (si requis) :</strong> ___________________________________________</div>
+    </div>
+
+    <div class="footer">Page 2 | 2</div>
+  </div>
   </body></html>`;
   const win = window.open('','_blank','width=870,height=1150');
   win.document.write(html);
