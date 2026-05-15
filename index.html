@@ -305,6 +305,7 @@ const sectionOrder = ["MURALE À -20°C", "MURALE À -30°C", "CASSETTE SIMPLE",
 
 let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 let estimate = [], tuyauLengths = {};
+let laborHrs = {tech:0, frigo:0}, laborRate = {tech:0, frigo:0};
 
 const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0})+' $';
 
@@ -407,6 +408,19 @@ function onTuyauLenChange(idx, val) {
   if (types[idx] !== undefined) tuyauLengths[types[idx]] = parseFloat(val) || 0;
 }
 
+function onLaborChange(type, field, val) {
+  if (field==='hrs') laborHrs[type] = parseFloat(val)||0;
+  else laborRate[type] = parseFloat(val)||0;
+  const techTotal = laborHrs.tech * laborRate.tech;
+  const frigoTotal = laborHrs.frigo * laborRate.frigo;
+  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
+  const grandTotal = itemsTotal + techTotal + frigoTotal;
+  const el = id => document.getElementById(id);
+  if (el('est-tech-sub')) el('est-tech-sub').textContent = techTotal ? fmt(techTotal) : '—';
+  if (el('est-frigo-sub')) el('est-frigo-sub').textContent = frigoTotal ? fmt(frigoTotal) : '—';
+  if (el('est-grand')) el('est-grand').textContent = fmt(grandTotal);
+}
+
 function renderEstimator(container) {
   if (!estimate.length) {
     container.innerHTML = `<div class="estimator-content"><div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>, cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
@@ -434,6 +448,10 @@ function renderEstimator(container) {
           style="width:90px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none"></td>
         <td style="text-align:right;font-size:11px;color:var(--gray-400)">Prix à venir</td>
       </tr>`).join('');
+  const techTotal = laborHrs.tech * laborRate.tech;
+  const frigoTotal = laborHrs.frigo * laborRate.frigo;
+  const grandTotal = itemsTotal + techTotal + frigoTotal;
+  const inputStyle = `width:85px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none`;
   container.innerHTML = `<div class="estimator-content">
     <div class="est-block">
       <div class="est-block-title">Produits sélectionnés</div>
@@ -449,10 +467,32 @@ function renderEstimator(container) {
         <tbody>${tuyauRows}</tbody>
       </table></div>
     </div>
+    <div class="est-block">
+      <div class="est-block-title">Main-d'œuvre</div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Type</th><th>Heures</th><th>Taux ($/hr)</th><th style="text-align:right">Sous-total</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600">Technicien</td>
+            <td><input type="number" value="${laborHrs.tech||''}" min="0" placeholder="0" oninput="onLaborChange('tech','hrs',this.value)" style="${inputStyle}"></td>
+            <td><input type="number" value="${laborRate.tech||''}" min="0" step="0.5" placeholder="0.00" oninput="onLaborChange('tech','rate',this.value)" style="${inputStyle}"></td>
+            <td class="td-price" id="est-tech-sub">${techTotal ? fmt(techTotal) : '—'}</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600">Frigoriste</td>
+            <td><input type="number" value="${laborHrs.frigo||''}" min="0" placeholder="0" oninput="onLaborChange('frigo','hrs',this.value)" style="${inputStyle}"></td>
+            <td><input type="number" value="${laborRate.frigo||''}" min="0" step="0.5" placeholder="0.00" oninput="onLaborChange('frigo','rate',this.value)" style="${inputStyle}"></td>
+            <td class="td-price" id="est-frigo-sub">${frigoTotal ? fmt(frigoTotal) : '—'}</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
     <div class="total-box">
       <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
       <div class="total-row"><span>Tuyauterie</span><span style="color:var(--gray-400);font-size:11px">Prix à venir</span></div>
-      <div class="total-row grand"><span>Total estimé</span><span>${fmt(itemsTotal)}</span></div>
+      <div class="total-row" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span>${techTotal ? fmt(techTotal) : '—'}</span></div>
+      <div class="total-row" style="${frigoTotal?'':'opacity:0.35'}"><span>Frigoriste</span><span>${frigoTotal ? fmt(frigoTotal) : '—'}</span></div>
+      <div class="total-row grand"><span>Total estimé</span><span id="est-grand">${fmt(grandTotal)}</span></div>
     </div>
   </div>`;
 }
