@@ -306,6 +306,21 @@ const sectionOrder = ["MURALE À -20°C", "MURALE À -30°C", "CASSETTE SIMPLE",
 let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 let estimate = [], tuyauLengths = {};
 let laborHrs = {tech:0, frigo:0, elec:0}, laborRate = {tech:0, frigo:0, elec:0};
+let subInfo = {
+  numero:'', date:new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}),
+  nomClient:'', adresseClient:'', villeClient:'', att:'', tel:'', courriel:'',
+  adresseTravaux:'Même', description:'Remplacement et installation d\'une nouvelle unité thermopompe', typeTravaux:''
+};
+let workItems = {
+  recuperation:{label:'Récupération écologique de l\'ancien équipement', checked:true},
+  thermo:      {label:'Fournir et installer nouvelle thermopompe', checked:true},
+  tuyau:       {label:'Fournir et installer tuyauterie', checked:true},
+  electrique:  {label:'Travaux électrique bas voltage', checked:true},
+  conduits:    {label:'Ajustement des conduits', checked:false},
+  mainOeuvre:  {label:'Main d\'œuvre', checked:true},
+  semaine:     {label:'Travaux de jours en semaine', checked:true},
+  miseEnMarche:{label:'Mise en marche', checked:true},
+};
 
 const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0})+' $';
 
@@ -372,6 +387,61 @@ function resetFilters() {
   ['searchInput'].forEach(id=>document.getElementById(id).value='');
   ['filterSection','filterMbtu','filterSub','filterDisco','filterTuyau'].forEach(id=>document.getElementById(id).value='');
   filtered=[...rawData]; render();
+}
+
+function onSubChange(field, val) { subInfo[field] = val; }
+
+function printSubmission() {
+  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
+  const techTotal = laborHrs.tech * laborRate.tech;
+  const frigoTotal = laborHrs.frigo * laborRate.frigo;
+  const elecTotal = laborHrs.elec * laborRate.elec;
+  const grandTotal = itemsTotal + techTotal + frigoTotal + elecTotal;
+  const subTotal = estimate.reduce((s,e)=>{
+    const rows = rawData.filter(r=>(r[2]==='—'?`__${r[3]}`:r[2])===e.key);
+    const sub = rows.find(r=>r[6]);
+    return s + (sub&&sub[6] ? sub[6]*e.qty : 0);
+  }, 0);
+  const fmtPrint = v => v.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const checkedItems = Object.values(workItems).filter(i=>i.checked).map(i=>`<li>${i.label}.</li>`).join('');
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>
+    @page{size:letter;margin:2cm 2.2cm}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#000;line-height:1.55}
+    .co-name{font-size:15pt;font-weight:bold;letter-spacing:1px;margin-bottom:3px}
+    .co-info{font-size:9pt}
+    .sub-box{text-align:center;margin:26px 0}
+    .sub-inner{display:inline-block;border:2px solid #000;padding:8px 30px;font-size:13pt;font-weight:bold;line-height:1.4}
+    .date{text-align:right;margin-bottom:18px}
+    .ul{text-decoration:underline}
+    .section{margin-bottom:14px}
+    .trav-title{font-weight:bold;font-style:italic;text-decoration:underline;margin-top:20px;margin-bottom:2px}
+    .trav-sub{font-style:italic;margin-bottom:8px}
+    ul{margin-left:20px;margin-bottom:18px}
+    li{list-style:none;margin:3px 0}li::before{content:"- "}
+    .prix{font-weight:bold;text-decoration:underline;margin-top:22px}
+    .subv{font-weight:bold;text-decoration:underline;margin-top:12px}
+    .footer{position:fixed;bottom:1cm;right:0;font-size:9pt}
+  </style></head><body>
+  <div class="co-name">LES ENTREPRISES SERGE FORTIN SERVICE</div>
+  <div class="co-info">CLIMATISATION, VENTILATION, CHAUFFAGE &nbsp;·&nbsp; COMMERCIAL, INDUSTRIEL, RÉSIDENTIEL<br>Tél : 450-934-2781 &nbsp; Fax : 450-934-5938</div>
+  <div class="sub-box"><div class="sub-inner">SOUMISSION<br>${subInfo.numero||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</div></div>
+  <div class="date">${subInfo.date}</div>
+  <div class="section"><span class="ul">Client :</span><br>${subInfo.nomClient}<br>${subInfo.adresseClient}<br>${subInfo.villeClient}</div>
+  <div class="section">Att : ${subInfo.att}<br>T : ${subInfo.tel}<br>@ : ${subInfo.courriel}</div>
+  <div class="section"><span class="ul">Adresse des travaux :</span><br>${subInfo.adresseTravaux}</div>
+  <p style="margin:18px 0">Il nous fait plaisir de soumissionner pour la réalisation des travaux de climatisation pour le projet suivant : <em>${subInfo.description}</em></p>
+  <div class="trav-title">Travaux :</div>
+  ${subInfo.typeTravaux?`<div class="trav-sub">${subInfo.typeTravaux}</div>`:''}
+  <ul>${checkedItems}</ul>
+  <div class="prix">Prix : ${fmtPrint(grandTotal)}$ + TAXES</div>
+  ${subTotal?`<div class="subv">Subvention Hydro Québec : $ ${fmtPrint(subTotal)}</div>`:''}
+  <div class="footer">Page 1 | 2</div>
+  </body></html>`;
+  const win = window.open('','_blank','width=870,height=1150');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(), 600);
 }
 
 function addToEstimate(key, label, prix) {
@@ -511,6 +581,31 @@ function renderEstimator(container) {
       <div class="total-row" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span>${techTotal ? fmt(techTotal) : '—'}</span></div>
       <div class="total-row" style="${frigoTotal?'':'opacity:0.35'}"><span>Frigoriste</span><span>${frigoTotal ? fmt(frigoTotal) : '—'}</span></div>
       <div class="total-row grand"><span>Total estimé</span><span id="est-grand">${fmt(grandTotal)}</span></div>
+    </div>
+    <div class="est-block">
+      <div class="est-block-title">Soumission</div>
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${[['numero','N° de soumission','850-25-JA',''],['date','Date','','']].map(([f,l,p,gc])=>`
+          <div class="filter-group" style="${gc}"><label>${l}</label>
+            <input type="text" value="${subInfo[f]}" oninput="onSubChange('${f}',this.value)" placeholder="${p}"
+              style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--gray-300);border-radius:7px;padding:6px 10px;outline:none"></div>`).join('')}
+        ${[['nomClient','Nom du client','Nom complet','grid-column:1/-1'],['adresseClient','Adresse','Rue et numéro','grid-column:1/-1'],['villeClient','Ville, Province, Code postal','Laval, Québec, H7E 5B4','grid-column:1/-1'],['att','Contact (Att)','',''],['tel','Téléphone','',''],['courriel','Courriel','','grid-column:1/-1'],['adresseTravaux','Adresse des travaux','Même','grid-column:1/-1'],['description','Description du projet','','grid-column:1/-1'],['typeTravaux','Type de travaux','Installation d\'unité 4 tonnes','grid-column:1/-1']].map(([f,l,p,gc])=>`
+          <div class="filter-group" style="${gc}"><label>${l}</label>
+            <input type="text" value="${subInfo[f]}" oninput="onSubChange('${f}',this.value)" placeholder="${p}"
+              style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--gray-300);border-radius:7px;padding:6px 10px;outline:none"></div>`).join('')}
+      </div>
+      <div style="padding:0 16px 16px">
+        <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-500);display:block;margin-bottom:8px">Éléments de travaux</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">
+          ${Object.entries(workItems).map(([k,v])=>`
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" ${v.checked?'checked':''} onchange="workItems['${k}'].checked=this.checked" style="width:15px;height:15px;cursor:pointer">
+              ${v.label}</label>`).join('')}
+        </div>
+      </div>
+      <div style="padding:0 16px 16px">
+        <button onclick="printSubmission()" style="background:var(--navy);color:white;border:none;padding:10px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.3px">Générer la soumission PDF</button>
+      </div>
     </div>
   </div>`;
 }
