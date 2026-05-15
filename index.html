@@ -156,6 +156,14 @@
       <option value="non">Sans subvention</option>
     </select>
   </div>
+  <div class="filter-group">
+    <label>Disjoncteur</label>
+    <select id="filterDisco" onchange="applyFilters()"><option value="">Tous</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Tuyaux</label>
+    <select id="filterTuyau" onchange="applyFilters()"><option value="">Tous</option></select>
+  </div>
   <button class="reset-btn" onclick="resetFilters()">✕ Réinitialiser</button>
 </div>
 
@@ -277,8 +285,12 @@ function getLink(model, desc, override) {
 function populateFilters() {
   const secs = [...new Set(rawData.map(r=>r[0]))].sort((a,b)=>(sectionOrder.indexOf(a)||99)-(sectionOrder.indexOf(b)||99));
   const mbtus = [...new Set(rawData.map(r=>r[1]).filter(v=>v!=='—'))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+  const discos = [...new Set(rawData.map(r=>r[8]).filter(Boolean))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+  const tuyaux = [...new Set(rawData.map(r=>r[9]).filter(Boolean))].sort();
   populateSelect('filterSection', secs);
   populateSelect('filterMbtu', mbtus);
+  populateSelect('filterDisco', discos);
+  populateSelect('filterTuyau', tuyaux);
 }
 
 function populateSelect(id, vals) {
@@ -292,11 +304,15 @@ function applyFilters() {
   const sec = document.getElementById('filterSection').value;
   const mbtu = document.getElementById('filterMbtu').value;
   const sub = document.getElementById('filterSub').value;
+  const disco = document.getElementById('filterDisco').value;
+  const tuyau = document.getElementById('filterTuyau').value;
   filtered = rawData.filter(r => {
     if(sec && r[0]!==sec) return false;
     if(mbtu && r[1]!==mbtu) return false;
     if(sub==='oui' && !r[6]) return false;
     if(sub==='non' && r[6]) return false;
+    if(disco && r[8]!==disco) return false;
+    if(tuyau && r[9]!==tuyau) return false;
     if(search && ![r[2],r[3],r[4],r[1]].join(' ').toLowerCase().includes(search)) return false;
     return true;
   });
@@ -305,7 +321,7 @@ function applyFilters() {
 
 function resetFilters() {
   ['searchInput'].forEach(id=>document.getElementById(id).value='');
-  ['filterSection','filterMbtu','filterSub'].forEach(id=>document.getElementById(id).value='');
+  ['filterSection','filterMbtu','filterSub','filterDisco','filterTuyau'].forEach(id=>document.getElementById(id).value='');
   filtered=[...rawData]; render();
 }
 
@@ -349,7 +365,7 @@ function renderCards(container) {
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
     const total=Object.keys(ahriGroups).length;
-    const cards=Object.entries(ahriGroups).map(([ahri,rows])=>{
+    const cards=Object.entries(ahriGroups).sort((a,b)=>parseFloat(a[1][0][1]||999)-parseFloat(b[1][0][1]||999)).map(([ahri,rows])=>{
       const totalPrice=rows.reduce((sum,r)=>sum+r[5],0);
       const subRow=rows.find(r=>r[6]);
       return `
@@ -387,7 +403,7 @@ function renderTable(container) {
   container.innerHTML=order.map(sec=>{
     const ahriGroups=groups[sec];
     const total=Object.keys(ahriGroups).length;
-    const rows=Object.entries(ahriGroups).map(([ahri,rws])=>{
+    const rows=Object.entries(ahriGroups).sort((a,b)=>parseFloat(a[1][0][1]||999)-parseFloat(b[1][0][1]||999)).map(([ahri,rws])=>{
       const d=[...new Set(rws.map(r=>r[8]).filter(Boolean))];
       const t=[...new Set(rws.map(r=>r[9]).filter(Boolean))];
       const specs=[...d.map(v=>v+' A'),...t].join(' · ');
