@@ -49,8 +49,9 @@
 
   /* CARDS */
   .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-100); border-top: none; border-radius: 0 0 8px 8px; }
-  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
-  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(15,32,68,0.13); }
+  .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(15,32,68,0.13); }
   .card-chevron { font-size: 9px; opacity: 0.5; color: var(--navy); transition: transform 0.2s; display: inline-block; }
   .card.open .card-chevron { transform: rotate(180deg); }
   .card-sub-row { margin-top: 10px; padding: 7px 10px; background: var(--mint); border-radius: 7px; display: flex; justify-content: space-between; align-items: center; }
@@ -368,13 +369,14 @@ function renderCards(container) {
     const cards=Object.entries(ahriGroups).sort((a,b)=>parseFloat(a[1][0][1]||999)-parseFloat(b[1][0][1]||999)).map(([ahri,rows])=>{
       const totalPrice=rows.reduce((sum,r)=>sum+r[5],0);
       const subRow=rows.find(r=>r[6]);
+      const clickable = totalPrice !== rows[0][5];
       return `
-      <div class="card" onclick="this.classList.toggle('open')">
+      <div class="card${clickable?' clickable':''}" ${clickable?`onclick="this.classList.toggle('open')"`:''}>
         <div class="card-header">
           <div>${ahri.startsWith('__')?'':` <span class="card-ahri-label">AHRI </span><span class="card-ahri-val">${ahri}</span>`}</div>
           <div style="display:flex;align-items:center;gap:6px">
             ${rows[0][1]!=='—'?`<span class="card-mbtu">${rows[0][1]}</span>`:''}
-            <span class="card-chevron">▼</span>
+            ${clickable?'<span class="card-chevron">▼</span>':''}
           </div>
         </div>
         <div class="card-body">
@@ -388,10 +390,10 @@ function renderCards(container) {
           ${(()=>{const d=[...new Set(rows.map(r=>r[8]).filter(Boolean))];const t=[...new Set(rows.map(r=>r[9]).filter(Boolean))];return(d.length||t.length)?`<div class="card-specs" style="margin-top:8px">${d.map(v=>`<span class="spec-badge">Disj. ${v} A</span>`).join('')}${t.map(v=>`<span class="spec-badge">Tuyaux ${v}</span>`).join('')}</div>`:''})()}
           ${subRow?`<div class="card-sub-row"><span class="sub-label">Subvention disponible</span><span class="sub-amount">${fmt(subRow[6])}</span></div>`:''}
         </div>
-        <div class="card-expand">
+        ${clickable?`<div class="card-expand">
           <div class="price-tag total"><div class="label">Prix total</div><div class="amount">${fmt(totalPrice)}</div></div>
           ${subRow?`<div class="price-tag sub"><div class="label">Total après subvention</div><div class="amount">${fmt(totalPrice-subRow[6])}</div></div>`:''}
-        </div>
+        </div>`:''}
       </div>`;
     }).join('');
     return `<div class="section-group"><div class="section-title">${sec}<span class="section-count">${total} produits</span></div><div class="cards-grid">${cards}</div></div>`;
