@@ -304,7 +304,7 @@ const rawData = [
 const sectionOrder = ["MURALE À -20°C", "MURALE À -30°C", "CASSETTE SIMPLE", "CASSETTE 4 VOIES", "CASSETTE COMMERCIAL LÉGER", "GAINABLE MOYENNE PRESSION", "GAINABLE COMMERCIAL LÉGER", "CONSOLE", "CENTRAL-ELIOS UTA", "ÉLÉMENTS CHAUFFANTS", "GRILLES CASSETTE", "COUVERCLES ET INSTALLATION", "OPTIONS ÉLECTRIQUES", "RACK AU SOL", "SUPPORTS MURAUX", "ACCESSOIRES"];
 
 let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
-let estimate = [], tuyauQtyVal = 0, tuyauPrixVal = 0;
+let estimate = [], tuyauLengths = {};
 
 const fmt = v => v == null ? null : v.toLocaleString('fr-CA',{minimumFractionDigits:0,maximumFractionDigits:0})+' $';
 
@@ -374,8 +374,10 @@ function resetFilters() {
 }
 
 function addToEstimate(key, label, prix) {
+  const tuyauVals = rawData.filter(r=>(r[2]==='—'?`__${r[3]}`:r[2])===key).map(r=>r[9]).filter(Boolean);
+  const tuyau = [...new Set(tuyauVals)].join(', ') || null;
   const existing = estimate.find(e=>e.key===key);
-  if (existing) { existing.qty++; } else { estimate.push({key, label, prix, qty:1}); }
+  if (existing) { existing.qty++; } else { estimate.push({key, label, prix, tuyau, qty:1}); }
   updateEstimateTab();
   if (currentTab !== 'estimateur') render();
 }
@@ -400,29 +402,18 @@ function updateEstimateTab() {
   if (btns[2]) btns[2].textContent = count > 0 ? `📐 Estimateur (${count})` : '📐 Estimateur';
 }
 
-function onTuyauChange() {
-  tuyauQtyVal = parseFloat(document.getElementById('tuyauQty').value) || 0;
-  tuyauPrixVal = parseFloat(document.getElementById('tuyauPrix').value) || 0;
-  const tuyauTotal = tuyauQtyVal * tuyauPrixVal;
-  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const grandTotal = itemsTotal + tuyauTotal;
-  const el = id => document.getElementById(id);
-  if (el('tuyauTotalDisplay')) el('tuyauTotalDisplay').textContent = tuyauTotal ? fmt(tuyauTotal) : '—';
-  if (el('itemsTotalDisplay')) el('itemsTotalDisplay').textContent = fmt(itemsTotal);
-  if (el('grandTotalDisplay')) el('grandTotalDisplay').textContent = fmt(grandTotal);
-  if (el('tuyauSummaryRow')) el('tuyauSummaryRow').style.display = tuyauTotal ? '' : 'none';
-  if (el('tuyauSummaryAmt')) el('tuyauSummaryAmt').textContent = fmt(tuyauTotal);
+function onTuyauLenChange(idx, val) {
+  const types = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
+  if (types[idx] !== undefined) tuyauLengths[types[idx]] = parseFloat(val) || 0;
 }
 
 function renderEstimator(container) {
   if (!estimate.length) {
-    container.innerHTML = `<div class="estimator-content"><div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>,<br>cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
+    container.innerHTML = `<div class="estimator-content"><div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>, cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
     return;
   }
-  const tuyauTotal = tuyauQtyVal * tuyauPrixVal;
   const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const grandTotal = itemsTotal + tuyauTotal;
-  const rows = estimate.map(e=>`<tr>
+  const prodRows = estimate.map(e=>`<tr>
     <td class="td-model" style="white-space:normal;font-size:12px">${e.label}</td>
     <td class="td-price">${fmt(e.prix)}</td>
     <td><div class="qty-control">
@@ -433,28 +424,35 @@ function renderEstimator(container) {
     <td class="td-price">${fmt(e.prix*e.qty)}</td>
     <td><button class="remove-btn" onclick="removeFromEstimate('${e.key}')">×</button></td>
   </tr>`).join('');
+  const tuyauTypes = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
+  const tuyauRows = tuyauTypes.length === 0
+    ? `<tr><td colspan="3" style="padding:14px;color:var(--gray-400);font-size:12px">Aucune tuyauterie associée aux produits sélectionnés.</td></tr>`
+    : tuyauTypes.map((type,i)=>`<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${type}</td>
+        <td><input type="number" value="${tuyauLengths[type]||''}" min="0" placeholder="0"
+          oninput="onTuyauLenChange(${i},this.value)"
+          style="width:90px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none"></td>
+        <td style="text-align:right;font-size:11px;color:var(--gray-400)">Prix à venir</td>
+      </tr>`).join('');
   container.innerHTML = `<div class="estimator-content">
     <div class="est-block">
       <div class="est-block-title">Produits sélectionnés</div>
       <div class="table-scroll"><table>
         <thead><tr><th>Modèle</th><th style="text-align:right">Prix unit.</th><th style="text-align:center">Qté</th><th style="text-align:right">Sous-total</th><th></th></tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${prodRows}</tbody>
       </table></div>
     </div>
     <div class="est-block">
       <div class="est-block-title">Tuyauterie</div>
-      <div class="tuyau-inputs">
-        <div class="filter-group"><label>Longueur (pi)</label><input type="number" id="tuyauQty" value="${tuyauQtyVal||''}" min="0" oninput="onTuyauChange()" placeholder="0" style="min-width:100px"></div>
-        <div class="tuyau-sep">×</div>
-        <div class="filter-group"><label>Prix / pied ($)</label><input type="number" id="tuyauPrix" value="${tuyauPrixVal||''}" min="0" step="0.01" oninput="onTuyauChange()" placeholder="0.00" style="min-width:100px"></div>
-        <div class="tuyau-sep">=</div>
-        <div class="filter-group"><label>Sous-total</label><div class="tuyau-result" id="tuyauTotalDisplay">${tuyauTotal ? fmt(tuyauTotal) : '—'}</div></div>
-      </div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Dimension</th><th>Longueur (pi)</th><th style="text-align:right">Prix/pi</th></tr></thead>
+        <tbody>${tuyauRows}</tbody>
+      </table></div>
     </div>
     <div class="total-box">
-      <div class="total-row"><span>Produits</span><span id="itemsTotalDisplay">${fmt(itemsTotal)}</span></div>
-      <div class="total-row" id="tuyauSummaryRow"${!tuyauTotal?' style="display:none"':''}><span>Tuyauterie</span><span id="tuyauSummaryAmt">${fmt(tuyauTotal)}</span></div>
-      <div class="total-row grand"><span>Total estimé</span><span id="grandTotalDisplay">${fmt(grandTotal)}</span></div>
+      <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
+      <div class="total-row"><span>Tuyauterie</span><span style="color:var(--gray-400);font-size:11px">Prix à venir</span></div>
+      <div class="total-row grand"><span>Total estimé</span><span>${fmt(itemsTotal)}</span></div>
     </div>
   </div>`;
 }
