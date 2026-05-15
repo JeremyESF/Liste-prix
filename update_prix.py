@@ -8,9 +8,12 @@ FICHIER_HTML  = 'index.html'
 
 # Mapping par (categorie, sous_categorie) — prioritaire sur le mapping par catégorie seule
 SECTION_MAP_DETAIL = {
-    ('Accessoires', 'Couvercles et articles d\'installation'): 'GRILLES CASSETTE',
-    ('Accessoires', 'Options électriques')                  : 'ÉLÉMENTS CHAUFFANTS',
-    ('Central-Elios UTA', 'Éléments chauffants électriques'): 'ÉLÉMENTS CHAUFFANTS',
+    ('Accessoires', 'Couvercles et articles d\'installation')          : 'GRILLES CASSETTE',
+    ('Accessoires', 'Options électriques')                             : 'OPTIONS ÉLECTRIQUES',
+    ('Accessoires', 'Supports au sol')                                 : 'RACK AU SOL',
+    ('Accessoires', 'Supports muraux (vendu à l\'unité / 2 requis)')   : 'SUPPORTS MURAUX',
+    ('Accessoires', 'Supports muraux et embouts')                      : 'SUPPORTS MURAUX',
+    ('Central-Elios UTA', 'Éléments chauffants électriques')           : 'ÉLÉMENTS CHAUFFANTS',
 }
 
 # Mapping par catégorie seule (fallback)
@@ -40,6 +43,9 @@ SECTION_ORDER = [
     'CENTRAL-ELIOS UTA',
     'ÉLÉMENTS CHAUFFANTS',
     'GRILLES CASSETTE',
+    'OPTIONS ÉLECTRIQUES',
+    'RACK AU SOL',
+    'SUPPORTS MURAUX',
     'ACCESSOIRES',
 ]
 
