@@ -123,8 +123,17 @@ def js_row(r):
     dim         = json.dumps(r[10], ensure_ascii=False) if r[10] else 'null'
     return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien},{disco},{tuyau},{dim}]'
 
+# Prix tuyauterie par diamètre ($/pi, base 164 pi)
+PRIX_TUYAUX = {
+    '1/4': round(300 / 164, 2),   # 1.83 $/pi
+    '3/8': round(450 / 164, 2),   # 2.74 $/pi
+    '1/2': round(600 / 164, 2),   # 3.66 $/pi
+    '5/8': round(790 / 164, 2),   # 4.82 $/pi
+}
+
 raw_data_js    = 'const rawData = [\n' + ',\n'.join(js_row(r) for r in rows) + '\n];'
 section_ord_js = 'const sectionOrder = ' + json.dumps(SECTION_ORDER, ensure_ascii=False) + ';'
+tuyau_prix_js  = 'const tuyauPrix = ' + json.dumps(PRIX_TUYAUX) + ';'
 
 # --- Mise à jour de index.html ---
 with open(FICHIER_HTML, 'r', encoding='utf-8') as f:
@@ -132,6 +141,7 @@ with open(FICHIER_HTML, 'r', encoding='utf-8') as f:
 
 html = re.sub(r'const rawData = \[.*?\];', raw_data_js, html, flags=re.DOTALL)
 html = re.sub(r'const sectionOrder = \[.*?\];', section_ord_js, html)
+html = re.sub(r'const tuyauPrix = \{.*?\};', tuyau_prix_js, html)
 
 with open(FICHIER_HTML, 'w', encoding='utf-8') as f:
     f.write(html)

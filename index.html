@@ -302,6 +302,7 @@ const rawData = [
 ];
 
 const sectionOrder = ["MURALE À -20°C", "MURALE À -30°C", "CASSETTE SIMPLE", "CASSETTE 4 VOIES", "CASSETTE COMMERCIAL LÉGER", "GAINABLE MOYENNE PRESSION", "GAINABLE COMMERCIAL LÉGER", "CONSOLE", "CENTRAL-ELIOS UTA", "ÉLÉMENTS CHAUFFANTS", "GRILLES CASSETTE", "COUVERCLES ET INSTALLATION", "OPTIONS ÉLECTRIQUES", "RACK AU SOL", "SUPPORTS MURAUX", "ACCESSOIRES"];
+const tuyauPrix = {"1/4": 1.83, "3/8": 2.74, "1/2": 3.66, "5/8": 4.82};
 
 let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 let estimate = [], tuyauLengths = {};
@@ -438,11 +439,7 @@ function generateTypeTravaux() {
 }
 
 function printSubmission() {
-  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const techTotal = laborHrs.tech * laborRate.tech;
-  const frigoTotal = laborHrs.frigo * laborRate.frigo;
-  const elecTotal = laborHrs.elec * laborRate.elec;
-  const grandTotal = itemsTotal + techTotal + frigoTotal + elecTotal;
+  const { tuyauTotal, techTotal, frigoTotal, elecTotal, grandTotal } = calcTotals();
   const netTotal = grandTotal * (1 + profitMargin/100);
   const subTotal = estimate.reduce((s,e)=>{
     const sub = getSubForKey(e.key);
@@ -562,36 +559,54 @@ function updateEstimateTab() {
   if (btns[2]) btns[2].textContent = count > 0 ? `📐 Estimateur (${count})` : '📐 Estimateur';
 }
 
+function tuyauPrixPied(type) {
+  return type.split(' x ').map(p=>p.trim()).reduce((s,p)=>s+(tuyauPrix[p]||0), 0);
+}
+
+function calcTotals() {
+  const tuyauTypes = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
+  const tuyauTotal = tuyauTypes.reduce((s,t)=>s+(tuyauLengths[t]||0)*tuyauPrixPied(t), 0);
+  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
+  const techTotal  = laborHrs.tech  * laborRate.tech;
+  const frigoTotal = laborHrs.frigo * laborRate.frigo;
+  const elecTotal  = laborHrs.elec  * laborRate.elec;
+  const grandTotal = itemsTotal + tuyauTotal + techTotal + frigoTotal + elecTotal;
+  return { itemsTotal, tuyauTotal, tuyauTypes, techTotal, frigoTotal, elecTotal, grandTotal };
+}
+
+function updateTotalsDisplay() {
+  const { tuyauTotal, tuyauTypes, techTotal, frigoTotal, elecTotal, grandTotal } = calcTotals();
+  const el = id => document.getElementById(id);
+  tuyauTypes.forEach((t,i)=>{
+    const sub = (tuyauLengths[t]||0) * tuyauPrixPied(t);
+    if (el(`est-tuyau-sub-${i}`)) el(`est-tuyau-sub-${i}`).textContent = sub ? fmt(sub) : '—';
+  });
+  if (el('est-tuyau-total')) { el('est-tuyau-total').textContent = tuyauTotal ? fmt(tuyauTotal) : '—'; el('est-row-tuyau').style.opacity = tuyauTotal ? '' : '0.35'; }
+  if (el('est-tech-sub'))   el('est-tech-sub').textContent  = techTotal  ? fmt(techTotal)  : '—';
+  if (el('est-frigo-sub'))  el('est-frigo-sub').textContent = frigoTotal ? fmt(frigoTotal) : '—';
+  if (el('est-elec-sub'))   el('est-elec-sub').textContent  = elecTotal  ? fmt(elecTotal)  : '—';
+  if (el('est-total-tech'))  { el('est-total-tech').textContent  = techTotal  ? fmt(techTotal)  : '—'; el('est-row-tech').style.opacity  = techTotal  ? '' : '0.35'; }
+  if (el('est-total-frigo')) { el('est-total-frigo').textContent = frigoTotal ? fmt(frigoTotal) : '—'; el('est-row-frigo').style.opacity = frigoTotal ? '' : '0.35'; }
+  if (el('est-total-elec'))  { el('est-total-elec').textContent  = elecTotal  ? fmt(elecTotal)  : '—'; el('est-row-elec').style.opacity  = elecTotal  ? '' : '0.35'; }
+  if (el('est-grand')) el('est-grand').textContent = fmt(grandTotal);
+  if (el('est-net'))   el('est-net').textContent   = fmt(grandTotal * (1 + profitMargin/100));
+}
+
 function onTuyauLenChange(idx, val) {
   const types = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
   if (types[idx] !== undefined) tuyauLengths[types[idx]] = parseFloat(val) || 0;
+  updateTotalsDisplay();
 }
 
 function onLaborChange(type, field, val) {
   if (field==='hrs') laborHrs[type] = parseFloat(val)||0;
   else laborRate[type] = parseFloat(val)||0;
-  const techTotal = laborHrs.tech * laborRate.tech;
-  const frigoTotal = laborHrs.frigo * laborRate.frigo;
-  const elecTotal = laborHrs.elec * laborRate.elec;
-  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const grandTotal = itemsTotal + techTotal + frigoTotal + elecTotal;
-  const el = id => document.getElementById(id);
-  if (el('est-tech-sub')) el('est-tech-sub').textContent = techTotal ? fmt(techTotal) : '—';
-  if (el('est-frigo-sub')) el('est-frigo-sub').textContent = frigoTotal ? fmt(frigoTotal) : '—';
-  if (el('est-elec-sub')) el('est-elec-sub').textContent = elecTotal ? fmt(elecTotal) : '—';
-  if (el('est-total-tech')) { el('est-total-tech').textContent = techTotal ? fmt(techTotal) : '—'; el('est-row-tech').style.opacity = techTotal ? '' : '0.35'; }
-  if (el('est-total-frigo')) { el('est-total-frigo').textContent = frigoTotal ? fmt(frigoTotal) : '—'; el('est-row-frigo').style.opacity = frigoTotal ? '' : '0.35'; }
-  if (el('est-total-elec')) { el('est-total-elec').textContent = elecTotal ? fmt(elecTotal) : '—'; el('est-row-elec').style.opacity = elecTotal ? '' : '0.35'; }
-  if (el('est-grand')) el('est-grand').textContent = fmt(grandTotal);
-  if (el('est-net')) el('est-net').textContent = fmt(grandTotal * (1 + profitMargin/100));
+  updateTotalsDisplay();
 }
 
 function onMarginChange(val) {
   profitMargin = parseFloat(val) || 0;
-  const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const grandTotal = itemsTotal + laborHrs.tech*laborRate.tech + laborHrs.frigo*laborRate.frigo + laborHrs.elec*laborRate.elec;
-  const el = id => document.getElementById(id);
-  if (el('est-net')) el('est-net').textContent = fmt(grandTotal * (1 + profitMargin/100));
+  updateTotalsDisplay();
 }
 
 function renderEstimator(container) {
@@ -617,20 +632,22 @@ function renderEstimator(container) {
     <td><button class="remove-btn" onclick="removeFromEstimate('${e.key}')">×</button></td>
   </tr>`;
   }).join('');
-  const tuyauTypes = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
+  const { tuyauTotal, tuyauTypes, techTotal, frigoTotal, elecTotal, grandTotal } = calcTotals();
   const tuyauRows = tuyauTypes.length === 0
-    ? `<tr><td colspan="3" style="padding:14px;color:var(--gray-400);font-size:12px">Aucune tuyauterie associée aux produits sélectionnés.</td></tr>`
-    : tuyauTypes.map((type,i)=>`<tr>
-        <td style="font-family:'DM Mono',monospace;font-size:12px">${type}</td>
-        <td><input type="number" value="${tuyauLengths[type]||''}" min="0" placeholder="0"
-          oninput="onTuyauLenChange(${i},this.value)"
-          style="width:90px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none"></td>
-        <td style="text-align:right;font-size:11px;color:var(--gray-400)">Prix à venir</td>
-      </tr>`).join('');
-  const techTotal = laborHrs.tech * laborRate.tech;
-  const frigoTotal = laborHrs.frigo * laborRate.frigo;
-  const elecTotal = laborHrs.elec * laborRate.elec;
-  const grandTotal = itemsTotal + techTotal + frigoTotal + elecTotal;
+    ? `<tr><td colspan="4" style="padding:14px;color:var(--gray-400);font-size:12px">Aucune tuyauterie associée aux produits sélectionnés.</td></tr>`
+    : tuyauTypes.map((type,i)=>{
+        const pp = tuyauPrixPied(type);
+        const len = tuyauLengths[type]||0;
+        const sub = len * pp;
+        return `<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:12px">${type}</td>
+          <td><input type="number" value="${len||''}" min="0" placeholder="0"
+            oninput="onTuyauLenChange(${i},this.value)"
+            style="width:90px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none"></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;text-align:right;white-space:nowrap">${pp.toFixed(2)} $/pi</td>
+          <td class="td-price" id="est-tuyau-sub-${i}">${sub ? fmt(sub) : '—'}</td>
+        </tr>`;
+      }).join('');
   const inputStyle = `width:85px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none`;
   container.innerHTML = `<div class="estimator-content">
     <div class="est-block">
@@ -643,7 +660,7 @@ function renderEstimator(container) {
     <div class="est-block">
       <div class="est-block-title">Tuyauterie</div>
       <div class="table-scroll"><table>
-        <thead><tr><th>Dimension</th><th>Longueur (pi)</th><th style="text-align:right">Prix/pi</th></tr></thead>
+        <thead><tr><th>Dimension</th><th>Longueur (pi)</th><th style="text-align:right">Prix/pi</th><th style="text-align:right">Sous-total</th></tr></thead>
         <tbody>${tuyauRows}</tbody>
       </table></div>
     </div>
@@ -684,7 +701,7 @@ function renderEstimator(container) {
     <div class="total-box">
       <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
       ${subTotal?`<div class="total-row" style="color:var(--mint-text)"><span>Subventions disponibles</span><span>${fmt(subTotal)}</span></div>`:''}
-      <div class="total-row"><span>Tuyauterie</span><span style="color:var(--gray-400);font-size:11px">Prix à venir</span></div>
+      <div class="total-row" id="est-row-tuyau" style="${tuyauTotal?'':'opacity:0.35'}"><span>Tuyauterie</span><span id="est-tuyau-total">${tuyauTotal ? fmt(tuyauTotal) : '—'}</span></div>
       <div class="total-row" id="est-row-elec" style="${elecTotal?'':'opacity:0.35'}"><span>Électricien</span><span id="est-total-elec">${elecTotal ? fmt(elecTotal) : '—'}</span></div>
       <div class="total-row" id="est-row-tech" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span id="est-total-tech">${techTotal ? fmt(techTotal) : '—'}</span></div>
       <div class="total-row" id="est-row-frigo" style="${frigoTotal?'':'opacity:0.35'}"><span>Frigoriste</span><span id="est-total-frigo">${frigoTotal ? fmt(frigoTotal) : '—'}</span></div>
