@@ -391,6 +391,51 @@ function resetFilters() {
 
 function onSubChange(field, val) { subInfo[field] = val; }
 
+function computeTypeTravaux() {
+  const mainSections = new Set(['MURALE À -20°C','MURALE À -30°C','CASSETTE SIMPLE','CASSETTE 4 VOIES','CASSETTE COMMERCIAL LÉGER','GAINABLE MOYENNE PRESSION','GAINABLE COMMERCIAL LÉGER','CONSOLE','CENTRAL-ELIOS UTA']);
+  const sectionType = {
+    'MURALE À -20°C':'murale','MURALE À -30°C':'murale',
+    'CASSETTE SIMPLE':'cassette','CASSETTE 4 VOIES':'cassette 4 voies','CASSETTE COMMERCIAL LÉGER':'cassette commerciale',
+    'GAINABLE MOYENNE PRESSION':'gainable','GAINABLE COMMERCIAL LÉGER':'gainable commercial',
+    'CONSOLE':'console','CENTRAL-ELIOS UTA':'centrale UTA'
+  };
+  const collected = [];
+  estimate.forEach(e => {
+    const rows = e.key.startsWith('__') ? rawData.filter(r=>r[3]===e.key.slice(2)) : rawData.filter(r=>r[2]===e.key);
+    rows.forEach(r => {
+      if (!mainSections.has(r[0])) return;
+      const d = (r[4]||'').toLowerCase();
+      const ut = d.includes('extérieur') ? 'ext' : d.includes('intérieur') ? 'int' : null;
+      if (ut) collected.push({section:r[0], mbtu:r[1], ut, qty:e.qty, disco:r[8]});
+    });
+  });
+  if (!collected.length) return '';
+  const agg = {};
+  collected.forEach(p => {
+    const k = `${p.section}|${p.mbtu}|${p.ut}`;
+    if (!agg[k]) agg[k] = {...p, qty:0};
+    agg[k].qty += p.qty;
+  });
+  const items = Object.values(agg);
+  const sections = [...new Set(items.map(i=>i.section))];
+  const mainType = sectionType[sections[0]] || 'thermopompe';
+  const lines = [`Installation d'un système thermopompe ${mainType} complet avec :`];
+  items.filter(i=>i.ut==='ext').forEach(p => {
+    lines.push(`${p.qty}x unité de condensation extérieure de ${p.mbtu} ou équivalente`);
+  });
+  items.filter(i=>i.ut==='int').forEach(p => {
+    lines.push(`${p.qty}x unité intérieure ${sectionType[p.section]||p.section.toLowerCase()} de ${p.mbtu} de marque Élios ou équivalente`);
+  });
+  const discos = [...new Set(items.map(i=>i.disco).filter(Boolean))];
+  lines.push(`Alimentation électrique${discos.length?' '+discos.join('/')+'A':''}`);
+  return lines.join('\n');
+}
+
+function generateTypeTravaux() {
+  subInfo.typeTravaux = computeTypeTravaux();
+  renderEstimator(document.getElementById('mainContent'));
+}
+
 function printSubmission() {
   const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
   const techTotal = laborHrs.tech * laborRate.tech;
@@ -543,6 +588,7 @@ function renderEstimator(container) {
     container.innerHTML = `<div class="estimator-content"><div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>, cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
     return;
   }
+  if (!subInfo.typeTravaux) subInfo.typeTravaux = computeTypeTravaux();
   const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
   const subTotal = estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); },0);
   const prodRows = estimate.map(e=>{
@@ -640,10 +686,18 @@ function renderEstimator(container) {
           <div class="filter-group" style="${gc}"><label>${l}</label>
             <input type="text" value="${subInfo[f]}" oninput="onSubChange('${f}',this.value)" placeholder="${p}"
               style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--gray-300);border-radius:7px;padding:6px 10px;outline:none"></div>`).join('')}
-        ${[['nomClient','Nom du client','Nom complet','grid-column:1/-1'],['adresseClient','Adresse','Rue et numéro','grid-column:1/-1'],['villeClient','Ville, Province, Code postal','Laval, Québec, H7E 5B4','grid-column:1/-1'],['att','Contact (Att)','',''],['tel','Téléphone','',''],['courriel','Courriel','','grid-column:1/-1'],['adresseTravaux','Adresse des travaux','Même','grid-column:1/-1'],['description','Description du projet','','grid-column:1/-1'],['typeTravaux','Type de travaux','Installation d\'unité 4 tonnes','grid-column:1/-1']].map(([f,l,p,gc])=>`
+        ${[['nomClient','Nom du client','Nom complet','grid-column:1/-1'],['adresseClient','Adresse','Rue et numéro','grid-column:1/-1'],['villeClient','Ville, Province, Code postal','Laval, Québec, H7E 5B4','grid-column:1/-1'],['att','Contact (Att)','',''],['tel','Téléphone','',''],['courriel','Courriel','','grid-column:1/-1'],['adresseTravaux','Adresse des travaux','Même','grid-column:1/-1'],['description','Description du projet','','grid-column:1/-1']].map(([f,l,p,gc])=>`
           <div class="filter-group" style="${gc}"><label>${l}</label>
             <input type="text" value="${subInfo[f]}" oninput="onSubChange('${f}',this.value)" placeholder="${p}"
               style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--gray-300);border-radius:7px;padding:6px 10px;outline:none"></div>`).join('')}
+        <div class="filter-group" style="grid-column:1/-1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0">Type de travaux</label>
+            <button onclick="generateTypeTravaux()" style="font-size:11px;padding:3px 10px;background:var(--navy);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">↺ Regénérer</button>
+          </div>
+          <textarea oninput="onSubChange('typeTravaux',this.value)" rows="5"
+            style="width:100%;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--gray-300);border-radius:7px;padding:6px 10px;outline:none;resize:vertical">${subInfo.typeTravaux}</textarea>
+        </div>
       </div>
       <div style="padding:0 16px 16px">
         <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-500);display:block;margin-bottom:8px">Éléments de travaux</label>
