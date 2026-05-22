@@ -450,7 +450,7 @@ function printSubmission() {
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>
     @page{size:letter;margin:0}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;font-size:11pt;color:#000;line-height:1.55;margin:2cm 2.2cm}
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#000;line-height:1.35;margin:2cm 2.2cm}
     .co-name{font-size:15pt;font-weight:bold;letter-spacing:1px;margin-bottom:3px}
     .co-info{font-size:9pt}
     .sub-box{text-align:center;margin:26px 0}
@@ -474,7 +474,7 @@ function printSubmission() {
   <div class="section"><span class="ul">Adresse des travaux :</span><br>${subInfo.adresseTravaux}</div>
   <p style="margin:18px 0">Il nous fait plaisir de soumissionner pour la réalisation des travaux de climatisation pour le projet suivant : <em>${subInfo.description}</em></p>
   <div class="trav-title">Travaux :</div>
-  ${subInfo.typeTravaux?`<div class="trav-sub">${subInfo.typeTravaux}</div>`:''}
+  ${subInfo.typeTravaux?`<div class="trav-sub">${subInfo.typeTravaux.replace(/\n/g,'<br>')}</div>`:''}
   <ul>${checkedItems}</ul>
   <div class="prix">Prix : ${fmtPrint(netTotal)}$ + TAXES</div>
   ${subTotal?`<div class="subv">Subvention Hydro-Québec disponible : ${fmtPrint(subTotal)} $</div>`:''}
