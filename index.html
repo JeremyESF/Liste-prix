@@ -541,10 +541,7 @@ function renderEstimator(container) {
     return;
   }
   const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const subTotal = estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); },0);
-  const prodRows = estimate.map(e=>{
-    const sub = getSubForKey(e.key);
-    return `<tr>
+  const prodRows = estimate.map(e=>`<tr>
     <td class="td-model" style="white-space:normal;font-size:12px">${e.label}</td>
     <td class="td-price">${fmt(e.prix)}</td>
     <td><div class="qty-control">
@@ -553,10 +550,8 @@ function renderEstimator(container) {
       <button class="qty-btn" onclick="changeQty('${e.key}',1)">+</button>
     </div></td>
     <td class="td-price">${fmt(e.prix*e.qty)}</td>
-    <td class="${sub?'td-sub':'no-sub'}" style="text-align:right;white-space:nowrap">${sub?fmt(sub*e.qty):'—'}</td>
     <td><button class="remove-btn" onclick="removeFromEstimate('${e.key}')">×</button></td>
-  </tr>`;
-  }).join('');
+  </tr>`).join('');
   const tuyauTypes = [...new Set(estimate.filter(e=>e.tuyau).map(e=>e.tuyau))];
   const tuyauRows = tuyauTypes.length === 0
     ? `<tr><td colspan="3" style="padding:14px;color:var(--gray-400);font-size:12px">Aucune tuyauterie associée aux produits sélectionnés.</td></tr>`
@@ -576,7 +571,7 @@ function renderEstimator(container) {
     <div class="est-block">
       <div class="est-block-title">Produits sélectionnés</div>
       <div class="table-scroll"><table>
-        <thead><tr><th>Modèle</th><th style="text-align:right">Prix unit.</th><th style="text-align:center">Qté</th><th style="text-align:right">Sous-total</th><th style="text-align:right;color:var(--mint-text)">Subvention</th><th></th></tr></thead>
+        <thead><tr><th>Modèle</th><th style="text-align:right">Prix unit.</th><th style="text-align:center">Qté</th><th style="text-align:right">Sous-total</th><th></th></tr></thead>
         <tbody>${prodRows}</tbody>
       </table></div>
     </div>
@@ -623,7 +618,6 @@ function renderEstimator(container) {
     </div>
     <div class="total-box">
       <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
-      ${subTotal ? `<div class="total-row" style="color:var(--mint-text)"><span>Subventions</span><span>− ${fmt(subTotal)}</span></div>` : ''}
       <div class="total-row"><span>Tuyauterie</span><span style="color:var(--gray-400);font-size:11px">Prix à venir</span></div>
       <div class="total-row" style="${elecTotal?'':'opacity:0.35'}"><span>Électricien</span><span>${elecTotal ? fmt(elecTotal) : '—'}</span></div>
       <div class="total-row" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span>${techTotal ? fmt(techTotal) : '—'}</span></div>
