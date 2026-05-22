@@ -477,7 +477,14 @@ function printSubmission() {
   ${subInfo.typeTravaux?`<div class="trav-sub">${subInfo.typeTravaux.replace(/\n/g,'<br>')}</div>`:''}
   <ul>${checkedItems}</ul>
   <div class="prix">Prix : ${fmtPrint(netTotal)}$ + TAXES</div>
-  ${subTotal?`<div class="subv">Subvention Hydro-Québec disponible : ${fmtPrint(subTotal)} $</div>`:''}
+  ${(()=>{
+    if (!subTotal) return '';
+    const ahris = [...new Set(estimate.filter(e=>getSubForKey(e.key)).map(e=>{
+      if (e.key.startsWith('__')) { const r=rawData.find(r=>r[3]===e.key.slice(2)); return r?r[2]:null; }
+      return e.key;
+    }).filter(a=>a&&a!=='—'))];
+    return `<div class="subv">Subvention LogisVert : ${fmtPrint(subTotal)} $${ahris.length?'<br>No AHRI : '+ahris.map(a=>`#${a}`).join(', '):''}</div>`;
+  })()}
   <div class="footer">Page 1 | 2</div>
 
   <div style="page-break-before:always">
@@ -716,7 +723,7 @@ function renderEstimator(container) {
         </span>
       </div>
       <div class="total-row grand" style="background:var(--navy);color:white;border-radius:8px;padding:12px 16px;margin-top:6px">
-        <span>Prix net client</span><span id="est-net">${fmt(grandTotal * (1 + profitMargin/100))}</span>
+        <span>Prix net total</span><span id="est-net">${fmt(grandTotal * (1 + profitMargin/100))}</span>
       </div>
     </div>
     <div class="est-block">
