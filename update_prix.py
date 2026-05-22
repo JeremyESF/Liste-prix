@@ -91,9 +91,10 @@ for row in ws.iter_rows(min_row=2, values_only=True):
     lien       = str(lien_master).strip() if lien_master else None
     disco      = str(disjoncteur).strip() if disjoncteur else None
     tuyau      = str(lignes_od).strip() if lignes_od else None
+    dim        = str(row[10]).strip() if row[10] else None
     type_unite = str(row[2]).strip().lower() if row[2] else ''
     type_ordre = 0 if 'int' in type_unite else 1
-    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien, disco, tuyau, type_ordre])
+    rows.append([section, mbtu, ahri_str, no_modele, description, prix, sub, lien, disco, tuyau, type_ordre, dim])
 
 # --- Tri : section → MBH croissant → AHRI → intérieure avant extérieure ---
 def sort_key(r):
@@ -105,7 +106,7 @@ def sort_key(r):
     return (sec_idx, mbtu_num, r[2], r[10])
 
 rows.sort(key=sort_key)
-rows = [r[:10] for r in rows]  # retire le champ type_ordre temporaire
+rows = [r[:10] + [r[11]] for r in rows]  # retire le champ type_ordre temporaire, garde dim
 
 # --- Génération du JS ---
 def js_row(r):
@@ -119,7 +120,8 @@ def js_row(r):
     lien        = json.dumps(r[7], ensure_ascii=False) if r[7] else 'null'
     disco       = json.dumps(r[8], ensure_ascii=False) if r[8] else 'null'
     tuyau       = json.dumps(r[9], ensure_ascii=False) if r[9] else 'null'
-    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien},{disco},{tuyau}]'
+    dim         = json.dumps(r[10], ensure_ascii=False) if r[10] else 'null'
+    return f'  [{section},{mbtu},{ahri},{modele},{description},{prix},{sub},{lien},{disco},{tuyau},{dim}]'
 
 raw_data_js    = 'const rawData = [\n' + ',\n'.join(js_row(r) for r in rows) + '\n];'
 section_ord_js = 'const sectionOrder = ' + json.dumps(SECTION_ORDER, ensure_ascii=False) + ';'
