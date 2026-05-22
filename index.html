@@ -531,6 +531,9 @@ function onLaborChange(type, field, val) {
   if (el('est-tech-sub')) el('est-tech-sub').textContent = techTotal ? fmt(techTotal) : '—';
   if (el('est-frigo-sub')) el('est-frigo-sub').textContent = frigoTotal ? fmt(frigoTotal) : '—';
   if (el('est-elec-sub')) el('est-elec-sub').textContent = elecTotal ? fmt(elecTotal) : '—';
+  if (el('est-total-tech')) { el('est-total-tech').textContent = techTotal ? fmt(techTotal) : '—'; el('est-row-tech').style.opacity = techTotal ? '' : '0.35'; }
+  if (el('est-total-frigo')) { el('est-total-frigo').textContent = frigoTotal ? fmt(frigoTotal) : '—'; el('est-row-frigo').style.opacity = frigoTotal ? '' : '0.35'; }
+  if (el('est-total-elec')) { el('est-total-elec').textContent = elecTotal ? fmt(elecTotal) : '—'; el('est-row-elec').style.opacity = elecTotal ? '' : '0.35'; }
   if (el('est-grand')) el('est-grand').textContent = fmt(grandTotal);
 }
 
@@ -618,9 +621,9 @@ function renderEstimator(container) {
     <div class="total-box">
       <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
       <div class="total-row"><span>Tuyauterie</span><span style="color:var(--gray-400);font-size:11px">Prix à venir</span></div>
-      <div class="total-row" style="${elecTotal?'':'opacity:0.35'}"><span>Électricien</span><span>${elecTotal ? fmt(elecTotal) : '—'}</span></div>
-      <div class="total-row" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span>${techTotal ? fmt(techTotal) : '—'}</span></div>
-      <div class="total-row" style="${frigoTotal?'':'opacity:0.35'}"><span>Frigoriste</span><span>${frigoTotal ? fmt(frigoTotal) : '—'}</span></div>
+      <div class="total-row" id="est-row-elec" style="${elecTotal?'':'opacity:0.35'}"><span>Électricien</span><span id="est-total-elec">${elecTotal ? fmt(elecTotal) : '—'}</span></div>
+      <div class="total-row" id="est-row-tech" style="${techTotal?'':'opacity:0.35'}"><span>Technicien</span><span id="est-total-tech">${techTotal ? fmt(techTotal) : '—'}</span></div>
+      <div class="total-row" id="est-row-frigo" style="${frigoTotal?'':'opacity:0.35'}"><span>Frigoriste</span><span id="est-total-frigo">${frigoTotal ? fmt(frigoTotal) : '—'}</span></div>
       <div class="total-row grand"><span>Total estimé</span><span id="est-grand">${fmt(grandTotal)}</span></div>
     </div>
     <div class="est-block">
