@@ -123,6 +123,21 @@
   .tuyau-inputs { display: flex; gap: 12px; align-items: flex-end; padding: 16px; flex-wrap: wrap; }
   .tuyau-sep { padding-bottom: 9px; color: var(--gray-500); font-size: 16px; }
   .tuyau-result { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; color: var(--navy); padding: 6px 10px; background: var(--ice); border-radius: 7px; height: 34px; display: flex; align-items: center; min-width: 110px; }
+  .projects-bar { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); padding: 14px 16px; }
+  .projects-bar-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--gray-500); }
+  .project-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+  .project-item:last-child { border-bottom: none; }
+  .project-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--navy); }
+  .project-date { font-size: 11px; color: var(--gray-500); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .proj-btn { font-size: 12px; padding: 4px 12px; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; white-space: nowrap; }
+  .proj-btn.load { background: var(--ice); color: var(--navy); }
+  .proj-btn.load:hover { background: var(--gray-100); }
+  .proj-btn.del { background: #fde8e8; color: #c53030; }
+  .proj-btn.del:hover { background: #fbd5d5; }
+  .proj-btn.save { background: var(--navy); color: white; }
+  .proj-btn.save:hover { background: var(--blue); }
+  .proj-btn.new { background: var(--gray-100); color: var(--gray-700); }
+  .proj-btn.new:hover { background: var(--gray-300); }
   .total-box { background: white; border-radius: var(--radius); box-shadow: var(--shadow); border: 1.5px solid var(--gray-100); padding: 16px 20px; }
   .total-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; color: var(--gray-500); border-bottom: 1px solid var(--gray-100); }
   .total-row:last-child { border-bottom: none; }
@@ -626,9 +641,89 @@ function onMarginChange(val) {
   updateTotalsDisplay();
 }
 
+function listProjects() {
+  try { return JSON.parse(localStorage.getItem('elios_projects') || '[]'); } catch(e) { return []; }
+}
+function saveProject() {
+  const defaultName = subInfo.nomClient
+    ? `${subInfo.nomClient}${subInfo.numero ? ' — ' + subInfo.numero : ''}`
+    : 'Projet sans nom';
+  const name = prompt('Nom du projet :', defaultName);
+  if (!name) return;
+  const projects = listProjects();
+  projects.push({
+    id: Date.now().toString(),
+    name,
+    savedAt: new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric'}),
+    estimate: JSON.parse(JSON.stringify(estimate)),
+    tuyauLengths: {...tuyauLengths},
+    laborHrs: {...laborHrs},
+    laborRate: {...laborRate},
+    profitMargin,
+    subInfo: {...subInfo},
+    workItems: JSON.parse(JSON.stringify(workItems))
+  });
+  localStorage.setItem('elios_projects', JSON.stringify(projects));
+  renderEstimator(document.getElementById('mainContent'));
+}
+function loadProject(id) {
+  const p = listProjects().find(p=>p.id===id);
+  if (!p) return;
+  estimate = p.estimate; tuyauLengths = p.tuyauLengths;
+  laborHrs = p.laborHrs; laborRate = p.laborRate;
+  profitMargin = p.profitMargin; subInfo = p.subInfo; workItems = p.workItems;
+  renderEstimator(document.getElementById('mainContent'));
+}
+function deleteProject(id) {
+  if (!confirm('Supprimer ce projet ?')) return;
+  localStorage.setItem('elios_projects', JSON.stringify(listProjects().filter(p=>p.id!==id)));
+  renderEstimator(document.getElementById('mainContent'));
+}
+function newProject() {
+  if (estimate.length && !confirm('Commencer un nouveau projet ? Le projet actuel non sauvegardé sera perdu.')) return;
+  estimate=[]; tuyauLengths={}; laborHrs={tech:0,frigo:0,elec:0};
+  laborRate={tech:100,frigo:102,elec:0}; profitMargin=0;
+  subInfo={numero:'',date:new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}),
+    nomClient:'',adresseClient:'',villeClient:'',att:'',tel:'',courriel:'',
+    adresseTravaux:'Même',description:'Remplacement et installation d\'une nouvelle unité thermopompe',typeTravaux:''};
+  workItems={
+    recuperation:{label:'Récupération écologique de l\'ancien équipement',checked:true},
+    thermo:{label:'Fournir et installer nouvelle thermopompe',checked:true},
+    tuyau:{label:'Fournir et installer tuyauterie',checked:true},
+    electrique:{label:'Travaux électrique bas voltage',checked:true},
+    conduits:{label:'Ajustement des conduits',checked:false},
+    mainOeuvre:{label:'Main d\'œuvre',checked:true},
+    semaine:{label:'Travaux de jours en semaine',checked:true},
+    miseEnMarche:{label:'Mise en marche',checked:true}
+  };
+  renderEstimator(document.getElementById('mainContent'));
+}
+function renderProjectsPanel() {
+  const projects = listProjects();
+  const rows = projects.map(p=>`
+    <div class="project-item">
+      <div style="flex:1;min-width:0">
+        <div class="project-name">${p.name}</div>
+        <div class="project-date">${p.savedAt}</div>
+      </div>
+      <button class="proj-btn load" onclick="loadProject('${p.id}')">Charger</button>
+      <button class="proj-btn del" onclick="deleteProject('${p.id}')">Supprimer</button>
+    </div>`).join('');
+  return `<div class="projects-bar">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${projects.length?'10':'4'}px">
+      <span class="projects-bar-title">Projets sauvegardés</span>
+      <div style="display:flex;gap:8px">
+        ${estimate.length?`<button class="proj-btn save" onclick="saveProject()">💾 Sauvegarder</button>`:''}
+        <button class="proj-btn new" onclick="newProject()">+ Nouveau</button>
+      </div>
+    </div>
+    ${projects.length ? rows : `<div style="color:var(--gray-400);font-size:12px">Aucun projet sauvegardé.</div>`}
+  </div>`;
+}
+
 function renderEstimator(container) {
   if (!estimate.length) {
-    container.innerHTML = `<div class="estimator-content"><div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>, cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
+    container.innerHTML = `<div class="estimator-content">${renderProjectsPanel()}<div class="est-empty">Aucun produit ajouté.<br>Dans <strong>Liste Technicien</strong> ou <strong>Liste Complète</strong>, cliquez sur <strong style="color:var(--sky)">+</strong> pour ajouter un produit à l'estimateur.</div></div>`;
     return;
   }
   if (!subInfo.typeTravaux) subInfo.typeTravaux = computeTypeTravaux();
@@ -667,6 +762,7 @@ function renderEstimator(container) {
       }).join('');
   const inputStyle = `width:85px;font-family:'DM Mono',monospace;border:1.5px solid var(--gray-300);border-radius:7px;padding:5px 8px;font-size:13px;outline:none`;
   container.innerHTML = `<div class="estimator-content">
+    ${renderProjectsPanel()}
     <div class="est-block">
       <div class="est-block-title">Produits sélectionnés</div>
       <div class="table-scroll"><table>
