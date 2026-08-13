@@ -125,10 +125,11 @@ def js_row(r):
 
 # Prix tuyauterie par diamètre ($/pi, base 164 pi)
 PRIX_TUYAUX = {
-    '1/4': round(300 / 164, 2),   # 1.83 $/pi
-    '3/8': round(450 / 164, 2),   # 2.74 $/pi
-    '1/2': round(600 / 164, 2),   # 3.66 $/pi
-    '5/8': round(790 / 164, 2),   # 4.82 $/pi
+    '1/4': round(150 / 50, 2),   # 3.00 $/pi
+    '3/8': round(200 / 50, 2),   # 4.00 $/pi
+    '1/2': round(275 / 50, 2),   # 5.50 $/pi
+    '5/8': round(350 / 50, 2),   # 7.00 $/pi
+    '3/4': round(450 / 50, 2),   # 9.00 $/pi
 }
 
 raw_data_js    = 'const rawData = [\n' + ',\n'.join(js_row(r) for r in rows) + '\n];'
