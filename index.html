@@ -622,6 +622,7 @@ let currentTab = 'resume', currentView = 'cards', filtered = [...rawData];
 let estimate = [], tuyauLengths = {};
 let laborHrs = {tech:0, frigo:0, elec:0}, laborRate = {tech:100, frigo:102, elec:0};
 let profitMargin = 0;
+let isResidentiel = false;
 let subInfo = {
   numero:'', date:new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}),
   nomClient:'', adresseClient:'', villeClient:'', att:'', tel:'', courriel:'',
@@ -755,10 +756,10 @@ function generateTypeTravaux() {
 function printSubmission() {
   const { tuyauTotal, techTotal, frigoTotal, elecTotal, grandTotal } = calcTotals();
   const netTotal = grandTotal * (1 + profitMargin/100);
-  const subTotal = estimate.reduce((s,e)=>{
+  const subTotal = isResidentiel ? estimate.reduce((s,e)=>{
     const sub = getSubForKey(e.key);
     return s + (sub ? sub*e.qty : 0);
-  }, 0);
+  }, 0) : 0;
   const fmtPrint = v => v.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
   const checkedItems = Object.values(workItems).filter(i=>i.checked).map(i=>`<li>${i.label}.</li>`).join('');
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>
@@ -851,7 +852,7 @@ function printSubmission() {
 function generateWord() {
   const { grandTotal } = calcTotals();
   const netTotal = grandTotal * (1 + profitMargin/100);
-  const subTotal = estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); }, 0);
+  const subTotal = isResidentiel ? estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); }, 0) : 0;
   const fmtPrint = v => v.toLocaleString('fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   const LI = t => `<p style="margin:0 0 3pt 0"><span style="font-family:Symbol">&#183;</span>&nbsp;&nbsp;${t}</p>`;
@@ -1034,6 +1035,7 @@ function onLaborChange(type, field, val) {
   updateTotalsDisplay();
 }
 
+function onResidentielChange(v) { isResidentiel = v; renderEstimate(); }
 function onMarginChange(val) {
   profitMargin = parseFloat(val) || 0;
   updateTotalsDisplay();
@@ -1058,6 +1060,7 @@ function saveProject() {
     laborHrs: {...laborHrs},
     laborRate: {...laborRate},
     profitMargin,
+    isResidentiel,
     subInfo: {...subInfo},
     workItems: JSON.parse(JSON.stringify(workItems))
   });
@@ -1069,7 +1072,7 @@ function loadProject(id) {
   if (!p) return;
   estimate = p.estimate; tuyauLengths = p.tuyauLengths;
   laborHrs = p.laborHrs; laborRate = p.laborRate;
-  profitMargin = p.profitMargin; subInfo = p.subInfo; workItems = p.workItems;
+  profitMargin = p.profitMargin; isResidentiel = p.isResidentiel||false; subInfo = p.subInfo; workItems = p.workItems;
   renderEstimator(document.getElementById('mainContent'));
 }
 function deleteProject(id) {
@@ -1080,7 +1083,7 @@ function deleteProject(id) {
 function newProject() {
   if (estimate.length && !confirm('Commencer un nouveau projet ? Le projet actuel non sauvegardé sera perdu.')) return;
   estimate=[]; tuyauLengths={}; laborHrs={tech:0,frigo:0,elec:0};
-  laborRate={tech:100,frigo:102,elec:0}; profitMargin=0;
+  laborRate={tech:100,frigo:102,elec:0}; profitMargin=0; isResidentiel=false;
   subInfo={numero:'',date:new Date().toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}),
     nomClient:'',adresseClient:'',villeClient:'',att:'',tel:'',courriel:'',
     adresseTravaux:'Même',description:'Remplacement et installation d\'une nouvelle unité thermopompe',typeTravaux:''};
@@ -1126,7 +1129,7 @@ function renderEstimator(container) {
   }
   if (!subInfo.typeTravaux) subInfo.typeTravaux = computeTypeTravaux();
   const itemsTotal = estimate.reduce((s,e)=>s+e.prix*e.qty, 0);
-  const subTotal = estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); },0);
+  const subTotal = isResidentiel ? estimate.reduce((s,e)=>{ const sub=getSubForKey(e.key); return s+(sub?sub*e.qty:0); },0) : 0;
   const prodRows = estimate.map(e=>{
     const sub = getSubForKey(e.key);
     return `<tr>
@@ -1138,7 +1141,7 @@ function renderEstimator(container) {
       <button class="qty-btn" onclick="changeQty('${e.key}',1)">+</button>
     </div></td>
     <td class="td-price">${fmt(e.prix*e.qty)}</td>
-    <td class="${sub?'td-sub':'no-sub'}" style="text-align:right;white-space:nowrap">${sub?fmt(sub*e.qty):'—'}</td>
+    <td class="${sub&&isResidentiel?'td-sub':'no-sub'}" style="text-align:right;white-space:nowrap">${sub&&isResidentiel?fmt(sub*e.qty):'—'}</td>
     <td><button class="remove-btn" onclick="removeFromEstimate('${e.key}')">×</button></td>
   </tr>`;
   }).join('');
@@ -1164,7 +1167,7 @@ function renderEstimator(container) {
     <div class="est-block">
       <div class="est-block-title">Produits sélectionnés</div>
       <div class="table-scroll"><table>
-        <thead><tr><th>Modèle</th><th style="text-align:right">Prix unit.</th><th style="text-align:center">Qté</th><th style="text-align:right">Sous-total</th><th style="text-align:right;color:var(--mint-text)">Subvention</th><th></th></tr></thead>
+        <thead><tr><th>Modèle</th><th style="text-align:right">Prix unit.</th><th style="text-align:center">Qté</th><th style="text-align:right">Sous-total</th><th style="text-align:right;color:${isResidentiel?'var(--mint-text)':' var(--gray-300)'}">Subvention</th><th></th></tr></thead>
         <tbody>${prodRows}</tbody>
       </table></div>
     </div>
@@ -1210,6 +1213,14 @@ function renderEstimator(container) {
       </table></div>
     </div>
     <div class="total-box">
+      <div class="total-row" style="padding-bottom:10px;margin-bottom:2px;border-bottom:1px solid var(--gray-200)">
+        <span style="font-weight:600">Projet résidentiel</span>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" ${isResidentiel?'checked':''} onchange="onResidentielChange(this.checked)"
+            style="width:17px;height:17px;cursor:pointer;accent-color:var(--green)">
+          <span style="font-size:12px;color:${isResidentiel?'var(--mint-text)':'var(--ink-3)'};font-weight:${isResidentiel?'600':'400'}">LogisVert admissible</span>
+        </label>
+      </div>
       <div class="total-row"><span>Produits</span><span>${fmt(itemsTotal)}</span></div>
       ${subTotal?`<div class="total-row" style="color:var(--mint-text)"><span>Subventions disponibles</span><span>${fmt(subTotal)}</span></div>`:''}
       <div class="total-row" id="est-row-tuyau" style="${tuyauTotal?'':'opacity:0.35'}"><span>Tuyauterie</span><span id="est-tuyau-total">${tuyauTotal ? fmt(tuyauTotal) : '—'}</span></div>
